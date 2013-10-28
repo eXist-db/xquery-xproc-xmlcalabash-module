@@ -34,6 +34,7 @@ import org.exist.collections.IndexInfo;
 import org.exist.dom.DefaultDocumentSet;
 import org.exist.dom.DocumentSet;
 import org.exist.dom.MutableDocumentSet;
+import org.exist.security.Permission;
 import org.exist.security.xacml.AccessContext;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
@@ -93,6 +94,63 @@ public class Simplest {
             
             String result = queryResult2String(broker, seq);
             
+            System.out.println(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        } finally {
+            pool.release(broker);
+        }
+    }
+    
+    private final static String STORE = "<?xml version='1.0'?>" +
+            "<p:declare-step xmlns:p='http://www.w3.org/ns/xproc'\n"+
+            "             xmlns:c='http://www.w3.org/ns/xproc-step'\n"+
+            "             version='1.0'>\n"+
+            "    <p:output port='result'/>\n"+
+            "    <p:store name='store'>"+
+            "        <p:input port='source'>\n"+
+            "           <p:inline>\n"+
+            "              <doc>Helloworld</doc>\n"+
+            "           </p:inline>\n"+
+            "        </p:input>\n"+
+            "        <p:with-option name='href' select='\"xmldb:exist:///db/test/data.xml\"'/>"+
+            "    </p:store>"+
+            "    <p:group>\n"+
+            "       <p:variable name='file' select='/xs:string(c:result)'>\n"+
+            "          <p:pipe step='store' port='result'/>\n"+
+            "       </p:variable>\n"+
+            "       <p:add-attribute match='file' attribute-name='url'>\n"+
+            "          <p:input port='source'>\n"+
+            "             <p:inline>\n"+
+            "                <file/>\n"+
+            "             </p:inline>\n"+
+            "          </p:input>\n"+
+            "          <p:with-option name='attribute-value' select='$file'/>\n"+
+            "       </p:add-attribute>\n"+
+            "    </p:group>\n"+
+            "</p:declare-step>";
+    
+    @Test
+    public void store() {
+        
+        configureAndStore(STORE, "store.xproc");
+        
+        DBBroker broker = null;
+        try {
+            broker = pool.get(pool.getSecurityManager().getSystemSubject());
+            assertNotNull(broker);
+            
+            XQuery xquery = broker.getXQueryService();
+            assertNotNull(xquery);
+            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/store.xproc','-')", null, AccessContext.TEST);
+            assertNotNull(seq);
+            assertEquals(1, seq.getItemCount());
+            
+            String result = queryResult2String(broker, seq);
+            
+            System.out.println("HERE THE RESULT");
             System.out.println(result);
 
         } catch (Exception e) {
@@ -167,6 +225,9 @@ public class Simplest {
 
             root = broker.getOrCreateCollection(transaction, TestConstants.TEST_COLLECTION_URI);
             assertNotNull(root);
+            
+            //root.setPermissions(0770);
+            
             broker.saveCollection(transaction, root);
 
             transact.commit(transaction);
@@ -202,10 +263,10 @@ public class Simplest {
             assertNotNull(collConfig);
             broker.removeCollection(transaction, collConfig);
 
-            if (root != null) {
-                assertNotNull(root);
-                broker.removeCollection(transaction, root);
-            }
+//            if (root != null) {
+//                assertNotNull(root);
+//                broker.removeCollection(transaction, root);
+//            }
             transact.commit(transaction);
 
         } catch (Exception e) {
@@ -242,7 +303,7 @@ public class Simplest {
 
     @AfterClass
     public static void stopDB() {
-        TestUtils.cleanupDB();
+        //TestUtils.cleanupDB();
         BrokerPool.stopAll(false);
         pool = null;
         root = null;

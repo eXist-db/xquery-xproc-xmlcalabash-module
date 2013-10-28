@@ -47,16 +47,10 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 
-import com.xmlcalabash.core.XProcRuntime;
-
 public class ProcessFunction extends BasicFunction {
 
     @SuppressWarnings("unused")
     private final static Logger logger = Logger.getLogger(ProcessFunction.class);
-
-    private XProcRuntime runtime = null;
-
-    String outputResult;
 
     public final static FunctionSignature signature = new FunctionSignature(
             new QName("process", XMLCalabashModule.NAMESPACE_URI,
@@ -84,22 +78,14 @@ public class ProcessFunction extends BasicFunction {
         String pipelineURI = args[0].getStringValue();
         String outputURI = args[1].getStringValue();
 
+        String outputResult;
         try {
 
-            String[] calabash_args = { "-oresult=" + outputURI, pipelineURI };
-
-            PrintStream stdout = System.out;
-
-            com.xmlcalabash.drivers.Main main = new com.xmlcalabash.drivers.Main();
-
-            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-            System.setOut(new PrintStream(byteStream, true));
-            main.run(calabash_args);
-            outputResult = byteStream.toString();
-            System.setOut(stdout);
+            outputResult = XProcRunner.run(context.getBroker(), pipelineURI, outputURI);
 
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
+            throw new XPathException(this, e);
         }
 
         StringReader reader = new StringReader(outputResult);
