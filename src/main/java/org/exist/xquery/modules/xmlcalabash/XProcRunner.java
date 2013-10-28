@@ -68,12 +68,7 @@ public class XProcRunner {
     private static Logger logger = Logger.getLogger(XProcRunner.class.getName());
 
     public static final String run(DBBroker broker, String in, String out) throws Exception {
-        SecurityURIResolver.db = broker.getDatabase();
-        
         XProcConfiguration config = new XProcConfiguration();
-        
-        //config.uriResolver = "org.exist.xquery.modules.xmlcalabash.InternalURIResolver";
-        //config.uriResolver = "org.exist.xquery.modules.xmlcalabash.SecurityURIResolver";
         
         UserArgs userArgs = new UserArgs();
         
