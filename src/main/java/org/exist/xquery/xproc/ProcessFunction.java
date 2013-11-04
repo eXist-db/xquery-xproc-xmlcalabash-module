@@ -1,0 +1,233 @@
+/*
+ *  eXist Open Source Native XML Database
+ *  Copyright (C) 2010-2013 The eXist Project
+ *  http://exist-db.org
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 3
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+package org.exist.xquery.xproc;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.apache.log4j.Logger;
+import org.exist.Namespaces;
+import org.exist.dom.QName;
+import org.exist.memtree.DocumentImpl;
+import org.exist.memtree.SAXAdapter;
+import org.exist.xmldb.XmldbURI;
+import org.exist.xquery.BasicFunction;
+import org.exist.xquery.Cardinality;
+import org.exist.xquery.FunctionSignature;
+import org.exist.xquery.XPathException;
+import org.exist.xquery.XQueryContext;
+import org.exist.xquery.value.FunctionParameterSequenceType;
+import org.exist.xquery.value.FunctionReturnSequenceType;
+import org.exist.xquery.value.Sequence;
+import org.exist.xquery.value.SequenceIterator;
+import org.exist.xquery.value.SequenceType;
+import org.exist.xquery.value.Type;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+
+import com.xmlcalabash.util.UserArgs;
+
+public class ProcessFunction extends BasicFunction {
+
+    @SuppressWarnings("unused")
+    private final static Logger logger = Logger.getLogger(ProcessFunction.class);
+    
+    private final static QName NAME = new QName("process", Module.NAMESPACE_URI, Module.PREFIX);
+    private final static String DESCRIPTION = "Function which invokes xmlcalabash XProc processor.";
+    
+    private final static  FunctionParameterSequenceType PIPELINE = 
+            new FunctionParameterSequenceType("pipeline", Type.STRING, Cardinality.EXACTLY_ONE, "XProc Pipeline");
+    
+    private final static FunctionReturnSequenceType RETURN = new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_ONE, "return type");
+
+    public final static FunctionSignature signaturies[] = {
+        new FunctionSignature(
+            NAME,
+            DESCRIPTION,
+            new SequenceType[] {
+                PIPELINE
+            },
+            RETURN
+        ),
+        new FunctionSignature(
+            NAME,
+            DESCRIPTION,
+            new SequenceType[] {
+                PIPELINE,
+                new FunctionParameterSequenceType("options", Type.NODE, Cardinality.ZERO_OR_MORE, "Options"),
+            },
+            RETURN
+        ),
+//        new FunctionSignature(
+//            NAME,
+//            DESCRIPTION,
+//            new SequenceType[] {
+//                PIPELINE,
+//                new FunctionParameterSequenceType("output", Type.STRING, Cardinality.EXACTLY_ONE, "Output result")
+//            },
+//            RETURN
+//        ),
+        
+    };
+    
+    public ProcessFunction(XQueryContext context, FunctionSignature signature) {
+        super(context, signature);
+    }
+
+    public Sequence eval(Sequence[] args, Sequence contextSequence)
+            throws XPathException {
+
+        if (args[0].isEmpty()) {
+            return Sequence.EMPTY_SEQUENCE;
+        }
+
+        String pipelineURI = args[0].getStringValue();
+        
+        UserArgs userArgs = new UserArgs();
+
+        if (args.length > 1)
+            parseOptions(userArgs, args[1]);
+
+        userArgs.setPipeline(pipelineURI);
+
+        String outputResult;
+        try {
+            
+            //getContext().getModuleLoadPath();
+            
+            URI staticBaseURI = null;
+            
+            Object key = getContext().getSource().getKey();
+            if (key instanceof XmldbURI) {
+                staticBaseURI = new URI( ((XmldbURI) key).removeLastSegment().toString() );
+            } else {
+                staticBaseURI = new URI( XmldbURI.LOCAL_DB );
+            }
+            
+            outputResult = XProcRunner.run(staticBaseURI, context.getBroker(), userArgs);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new XPathException(this, e);
+        }
+
+        StringReader reader = new StringReader(outputResult);
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setNamespaceAware(true);
+            InputSource src = new InputSource(reader);
+
+            XMLReader xr = null;
+
+            if (xr == null) {
+                SAXParser parser = factory.newSAXParser();
+                xr = parser.getXMLReader();
+            }
+
+            SAXAdapter adapter = new SAXAdapter(context);
+            xr.setContentHandler(adapter);
+            xr.setProperty(Namespaces.SAX_LEXICAL_HANDLER, adapter);
+            xr.parse(src);
+
+            return (DocumentImpl) adapter.getDocument();
+        } catch (ParserConfigurationException e) {
+            throw new XPathException(this, "Error while constructing XML parser: " + e.getMessage(), e);
+        } catch (SAXException e) {
+            throw new XPathException(this, "Error while parsing XML: " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw new XPathException(this, "Error while parsing XML: " + e.getMessage(), e);
+        }
+    }
+    
+    protected void parseOptions(UserArgs userArgs, Sequence optSeq) throws XPathException {
+
+        if (optSeq.isEmpty()) 
+            return;
+        
+        SequenceIterator iter = optSeq.iterate();
+        while (iter.hasNext()) {
+            Element element = (Element) iter.nextItem();
+
+            String localName = element.getLocalName();
+            if ("input".equalsIgnoreCase(localName)) {
+                
+                String port = element.getAttribute("port");
+                if (port == null || port.isEmpty()) {
+                    throw new XPathException(this, "Input pipe port undefined at '"+element.toString()+"'");
+                }
+                
+                com.xmlcalabash.util.Input.Type type;
+                String _type = element.getAttribute("type");
+                if (_type == null || _type.isEmpty()) {
+                    throw new XPathException(this, "Input pine type undefined at '"+element.toString()+"'");
+                } else if ("XML".equalsIgnoreCase(_type)) {
+                    type = com.xmlcalabash.util.Input.Type.XML;
+                } else if ("DATA".equalsIgnoreCase(_type)) {
+                    type = com.xmlcalabash.util.Input.Type.DATA;
+                } else {
+                    throw new XPathException(this, "Unknown input pine type '"+_type+"'");                    
+                }
+
+                String url = element.getAttribute("url");
+                if (url == null || url.isEmpty()) {
+                    throw new XPathException(this, "Input pine url undefined at '"+element.toString()+"'");
+                }
+                
+                userArgs.addInput(port, url, type);
+                
+            } else if ("output".equalsIgnoreCase(localName)) {
+
+                String port = element.getAttribute("port");
+                if (port == null || port.isEmpty()) {
+                    throw new XPathException(this, "Output pipe port undefined at '"+element.toString()+"'");
+                }
+                
+                String url = element.getAttribute("url");
+                if (url == null || url.isEmpty()) {
+                    throw new XPathException(this, "Output pine url undefined at '"+element.toString()+"'");
+                }
+
+                userArgs.addOutput(port, url);
+
+            } else if ("option".equalsIgnoreCase(localName)) {
+                
+                String name = element.getAttribute("name");
+                if (name == null || name.isEmpty()) {
+                    throw new XPathException(this, "Option name undefined at '"+element.toString()+"'");
+                }
+
+                String value = element.getAttribute("value");
+                if (value == null || value.isEmpty()) {
+                    throw new XPathException(this, "Option value undefined at '"+element.toString()+"'");
+                }
+
+                userArgs.addOption(name, value);
+            } else 
+                throw new XPathException(this, "Unknown option '" + localName + "'.");
+        }
+    }
+}

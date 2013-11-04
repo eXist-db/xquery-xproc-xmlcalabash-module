@@ -17,7 +17,7 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.exist.xquery.modules.xmlcalabash;
+package org.exist.xquery.xproc;
 
 import static com.xmlcalabash.core.XProcConstants.c_data;
 import static com.xmlcalabash.util.Output.Kind.OUTPUT_STREAM;
@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -67,22 +68,29 @@ public class XProcRunner {
     
     private static Logger logger = Logger.getLogger(XProcRunner.class.getName());
 
-    public static final String run(DBBroker broker, String in, String out) throws Exception {
+    public static final String run(URI staticBaseURI, DBBroker broker, UserArgs userArgs) throws Exception {
         XProcConfiguration config = new XProcConfiguration();
-        
-        UserArgs userArgs = new UserArgs();
-        
-        userArgs.setPipeline(in);
         
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         
-        run(byteStream, userArgs, config);
+        run(staticBaseURI, byteStream, userArgs, config);
         
         return byteStream.toString();
     }
     
-    protected static boolean run(ByteArrayOutputStream byteStream, UserArgs userArgs, XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
+    protected static boolean run(URI staticBaseURI, ByteArrayOutputStream byteStream, UserArgs userArgs, XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
         XProcRuntime runtime = new XProcRuntime(config);
+        
+        if (staticBaseURI != null) {
+            //inject
+            try {
+                Field field = runtime.getClass().getField("staticBaseURI");
+                field.set(runtime, staticBaseURI);
+            } catch (Throwable e) {
+                //can't be so...
+            }
+        }
+        
         boolean debug = config.debug;
 
         XPipeline pipeline = null;
@@ -226,8 +234,9 @@ public class XProcRunner {
         }
 
         if (implicitPort != null && !pipeline.hasReadablePipes(implicitPort)) {
-            XdmNode doc = runtime.parse(new InputSource(System.in));
-            pipeline.writeTo(implicitPort, doc);
+            throw new XProcException("no implicitPort or it is not readable.");
+//            XdmNode doc = runtime.parse(new InputSource(System.in));
+//            pipeline.writeTo(implicitPort, doc);
         }
 
         Map<String, Output> portOutputs = new HashMap<String, Output>();

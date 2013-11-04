@@ -17,7 +17,7 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.exist.xquery.modules.xmlcalabash;
+package org.exist.xquery.xproc;
 
 import static org.junit.Assert.*;
 
@@ -27,14 +27,12 @@ import java.util.Properties;
 
 import javax.xml.transform.OutputKeys;
 
-import org.exist.TestUtils;
 import org.exist.collections.Collection;
 import org.exist.collections.CollectionConfigurationManager;
 import org.exist.collections.IndexInfo;
 import org.exist.dom.DefaultDocumentSet;
 import org.exist.dom.DocumentSet;
 import org.exist.dom.MutableDocumentSet;
-import org.exist.security.Permission;
 import org.exist.security.xacml.AccessContext;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
@@ -51,6 +49,7 @@ import org.exist.xquery.XQuery;
 import org.exist.xquery.XQueryContext;
 import org.exist.xquery.value.NodeValue;
 import org.exist.xquery.value.Sequence;
+import org.exist.xquery.xproc.Module;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -88,7 +87,7 @@ public class Simplest {
             
             XQuery xquery = broker.getXQueryService();
             assertNotNull(xquery);
-            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/hello.xproc','-')", null, AccessContext.TEST);
+            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/hello.xproc')", null, AccessContext.TEST);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
             
@@ -144,7 +143,7 @@ public class Simplest {
             
             XQuery xquery = broker.getXQueryService();
             assertNotNull(xquery);
-            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/store.xproc','-')", null, AccessContext.TEST);
+            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/store.xproc')", null, AccessContext.TEST);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
             
@@ -292,8 +291,8 @@ public class Simplest {
             
             Map<String, Class<?>> map = (Map<String, Class<?>>) pool.getConfiguration().getProperty(XQueryContext.PROPERTY_BUILT_IN_MODULES);
             map.put(
-                XMLCalabashModule.NAMESPACE_URI, 
-                XMLCalabashModule.class);
+                Module.NAMESPACE_URI, 
+                Module.class);
             
         } catch (Exception e) {
             e.printStackTrace();

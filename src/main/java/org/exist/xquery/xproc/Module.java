@@ -17,25 +17,26 @@
  *  License along with this library; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package org.exist.xquery.modules.xmlcalabash;
+package org.exist.xquery.xproc;
 
 import java.util.List;
 import java.util.Map;
 import org.exist.xquery.AbstractInternalModule;
 import org.exist.xquery.FunctionDef;
 
-public class XMLCalabashModule extends AbstractInternalModule {
+public class Module extends AbstractInternalModule {
 
-    public final static String NAMESPACE_URI = "http://xmlcalabash.com";
-    public final static String PREFIX = "xmlcalabash";
-    public final static String INCLUSION_DATE = "2010-27-04";
-    public final static String RELEASED_IN_VERSION = "eXist-1.5";
+    public final static String NAMESPACE_URI = "http://exist-db.org/xproc";
+    public final static String PREFIX = "xproc";
+    public final static String INCLUSION_DATE = "2013-11-04";
+    public final static String RELEASED_IN_VERSION = "eXist-2.1";
 
     private final static FunctionDef[] functions = {
-            new FunctionDef(ProcessFunction.signature, ProcessFunction.class)
+            new FunctionDef(ProcessFunction.signaturies[0], ProcessFunction.class),
+            new FunctionDef(ProcessFunction.signaturies[1], ProcessFunction.class),
         };
 
-    public XMLCalabashModule(Map<String, List<? extends Object>> parameters) {
+    public Module(Map<String, List<? extends Object>> parameters) {
         super(functions, parameters);
     }
 
@@ -48,7 +49,7 @@ public class XMLCalabashModule extends AbstractInternalModule {
     }
 
     public String getDescription() {
-        return "A module for performing XML Calabash XProc processing";
+        return "A module for performing XProc processing";
     }
 
     public String getReleaseVersion() {
