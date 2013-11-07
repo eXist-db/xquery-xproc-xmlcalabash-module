@@ -19,19 +19,27 @@
  */
 package org.exist.xquery.xproc;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.log4j.Logger;
 import org.exist.Namespaces;
 import org.exist.dom.QName;
 import org.exist.memtree.DocumentImpl;
 import org.exist.memtree.SAXAdapter;
+import org.exist.util.serializer.IndentingXMLWriter;
+import org.exist.util.serializer.SAXSerializer;
+import org.exist.util.serializer.XMLWriter;
 import org.exist.xmldb.XmldbURI;
 import org.exist.xquery.BasicFunction;
 import org.exist.xquery.Cardinality;
@@ -60,7 +68,7 @@ public class ProcessFunction extends BasicFunction {
     private final static String DESCRIPTION = "Function which invokes xmlcalabash XProc processor.";
     
     private final static  FunctionParameterSequenceType PIPELINE = 
-            new FunctionParameterSequenceType("pipeline", Type.STRING, Cardinality.EXACTLY_ONE, "XProc Pipeline");
+            new FunctionParameterSequenceType("pipeline", Type.ITEM, Cardinality.EXACTLY_ONE, "XProc Pipeline");
     
     private final static FunctionReturnSequenceType RETURN = new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_ONE, "return type");
 
@@ -105,14 +113,50 @@ public class ProcessFunction extends BasicFunction {
             return Sequence.EMPTY_SEQUENCE;
         }
 
-        String pipelineURI = args[0].getStringValue();
+//        Sequence input = getArgument(0).eval(contextSequence, contextItem);
         
         UserArgs userArgs = new UserArgs();
 
-        if (args.length > 1)
-            parseOptions(userArgs, args[1]);
+        Sequence pipe = args[0];
+        
+        if(Type.subTypeOf(pipe.getItemType(), Type.NODE)) {
+            
+            if (pipe.getItemCount() != 1) {
+                throw new XPathException(this, "Pipeline must have just ONE and only ONE element.");
+            }
+            
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            OutputStreamWriter osw;
+            try {
+                osw = new OutputStreamWriter( baos, "UTF-8" );
+            } catch( UnsupportedEncodingException e ) {
+                throw new XPathException( this, "Internal error" );
+            }
+            
+            XMLWriter xmlWriter = new XMLWriter( osw );
+            
+            SAXSerializer sax = new SAXSerializer();
+            
+            sax.setReceiver( xmlWriter );
+            
+            try {
+                pipe.itemAt(0).toSAX( context.getBroker(), sax, new Properties() );
+                osw.flush();
+                osw.close();
+            } catch( Exception e ) {
+                throw new XPathException(this, e);
+            }
+            
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            userArgs.setPipeline(bais, XmldbURI.LOCAL_DB);
+            
+        } else {
+            userArgs.setPipeline(pipe.getStringValue());
+        }
 
-        userArgs.setPipeline(pipelineURI);
+        if (args.length > 1) {
+            parseOptions(userArgs, args[1]);
+        }
 
         String outputResult;
         try {

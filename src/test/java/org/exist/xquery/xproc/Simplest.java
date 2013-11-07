@@ -76,7 +76,7 @@ public class Simplest {
             "</p:declare-step>";
 
     @Test
-    public void test() {
+    public void test01() {
         
         configureAndStore(XPROC, "hello.xproc");
         
@@ -87,7 +87,7 @@ public class Simplest {
             
             XQuery xquery = broker.getXQueryService();
             assertNotNull(xquery);
-            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/hello.xproc')", null, AccessContext.TEST);
+            Sequence seq = xquery.execute("xproc:process('xmldb:exist:///db/test/hello.xproc')", null, AccessContext.TEST);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
             
@@ -102,6 +102,43 @@ public class Simplest {
             pool.release(broker);
         }
     }
+    
+    @Test
+    public void test02() {
+        
+        DBBroker broker = null;
+        try {
+            broker = pool.get(pool.getSecurityManager().getSystemSubject());
+            assertNotNull(broker);
+            
+            XQuery xquery = broker.getXQueryService();
+            assertNotNull(xquery);
+            Sequence seq = xquery.execute(
+                "xproc:process("+
+                    "<p:declare-step version='1.0' xmlns:p='http://www.w3.org/ns/xproc'>"+
+                    "   <p:input port='source'>"+
+                    "       <p:inline><doc>Helloworld</doc></p:inline>"+
+                    "   </p:input>"+
+                    "   <p:output port='result'/>"+
+                    "   <p:identity/>"+
+                    "</p:declare-step>)",
+                null, AccessContext.TEST
+            );
+            assertNotNull(seq);
+            assertEquals(1, seq.getItemCount());
+            
+            String result = queryResult2String(broker, seq);
+            
+            System.out.println(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        } finally {
+            pool.release(broker);
+        }
+    }
+
     
     private final static String STORE = "<?xml version='1.0'?>" +
             "<p:declare-step xmlns:p='http://www.w3.org/ns/xproc'\n"+
@@ -143,7 +180,7 @@ public class Simplest {
             
             XQuery xquery = broker.getXQueryService();
             assertNotNull(xquery);
-            Sequence seq = xquery.execute("xmlcalabash:process('xmldb:exist:///db/test/store.xproc')", null, AccessContext.TEST);
+            Sequence seq = xquery.execute("xproc:process('xmldb:exist:///db/test/store.xproc')", null, AccessContext.TEST);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
             
@@ -155,6 +192,29 @@ public class Simplest {
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
+        } finally {
+            pool.release(broker);
+        }
+    }
+
+    @Test
+    public void empty() {
+        
+        configureAndStore(STORE, "store.xproc");
+        
+        DBBroker broker = null;
+        try {
+            broker = pool.get(pool.getSecurityManager().getSystemSubject());
+            assertNotNull(broker);
+            
+            XQuery xquery = broker.getXQueryService();
+            assertNotNull(xquery);
+            
+            xquery.execute("xproc:process('')", null, AccessContext.TEST);
+            
+            fail("expecting exception!");
+
+        } catch (Exception e) {
         } finally {
             pool.release(broker);
         }
