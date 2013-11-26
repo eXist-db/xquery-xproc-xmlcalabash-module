@@ -27,9 +27,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,6 +43,7 @@ import net.sf.saxon.s9api.XdmNode;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.exist.storage.DBBroker;
+import org.exist.util.io.Resource;
 import org.xml.sax.InputSource;
 
 import com.xmlcalabash.core.XProcConfiguration;
@@ -57,7 +58,6 @@ import com.xmlcalabash.runtime.XPipeline;
 import com.xmlcalabash.util.Input;
 import com.xmlcalabash.util.Output;
 import com.xmlcalabash.util.S9apiUtils;
-import com.xmlcalabash.util.UserArgs;
 import com.xmlcalabash.util.Output.Kind;
 
 /**
@@ -82,15 +82,10 @@ public class XProcRunner {
         XProcRuntime runtime = new XProcRuntime(config);
         
         if (staticBaseURI != null) {
-            //inject
-            try {
-                Field field = runtime.getClass().getField("staticBaseURI");
-                field.set(runtime, staticBaseURI);
-            } catch (Throwable e) {
-                //can't be so...
-            }
+            runtime.setStaticBaseURI(staticBaseURI);
+            runtime.setBaseURI(staticBaseURI);
         }
-        
+
         boolean debug = config.debug;
 
         XPipeline pipeline = null;
@@ -171,9 +166,10 @@ public class XProcRunner {
                                 case URI:
                                     String uri = input.getUri();
                                     if ("-".equals(uri)) {
-                                        doc = runtime.parse(new InputSource(System.in));
+                                        throw new IOException("unsupported '-'");
+//                                        doc = runtime.parse(new InputSource(System.in));
                                     } else {
-                                        doc = runtime.parse(new InputSource(uri));
+                                        doc = runtime.parse(uri, staticBaseURI.toASCIIString());
                                     }
                                     break;
 
@@ -340,9 +336,17 @@ public class XProcRunner {
             } else {
                 switch (output.getKind()) {
                     case URI:
-                        URI furi = new URI(output.getUri());
-                        String filename = furi.getPath();
-                        FileOutputStream outfile = new FileOutputStream(filename);
+                        URI uri = new URI(output.getUri());
+
+                        String filename = uri.getPath();
+
+                        Resource resource = new Resource(filename);
+                        OutputStream outfile = resource.getOutputStream();
+
+//                        URI furi = new URI(output.getUri());
+//                        String filename = furi.getPath();
+//                        FileOutputStream outfile = new FileOutputStream(filename);
+
                         wd = new WritableDocument(runtime, filename, serial, outfile);
                         break;
 
@@ -395,25 +399,25 @@ public class XProcRunner {
 
     }
 
-    private static void error(Logger logger, XdmNode node, String message, QName code) {
-        logger.severe(message(node, message));
-    }
-
-    private static void warning(Logger logger, XdmNode node, String message) {
-        logger.warning(message(node, message));
-    }
-
-    private static void info(Logger logger, XdmNode node, String message) {
-        logger.info(message(node, message));
-    }
-
-    private static void fine(Logger logger, XdmNode node, String message) {
-        logger.fine(message(node, message));
-    }
-
-    private static void finer(Logger logger, XdmNode node, String message) {
-        logger.finer(message(node, message));
-    }
+//    private static void error(Logger logger, XdmNode node, String message, QName code) {
+//        logger.severe(message(node, message));
+//    }
+//
+//    private static void warning(Logger logger, XdmNode node, String message) {
+//        logger.warning(message(node, message));
+//    }
+//
+//    private static void info(Logger logger, XdmNode node, String message) {
+//        logger.info(message(node, message));
+//    }
+//
+//    private static void fine(Logger logger, XdmNode node, String message) {
+//        logger.fine(message(node, message));
+//    }
+//
+//    private static void finer(Logger logger, XdmNode node, String message) {
+//        logger.finer(message(node, message));
+//    }
 
     private static void finest(Logger logger, XdmNode node, String message) {
         logger.finest(message(node, message));

@@ -37,7 +37,6 @@ import org.exist.Namespaces;
 import org.exist.dom.QName;
 import org.exist.memtree.DocumentImpl;
 import org.exist.memtree.SAXAdapter;
-import org.exist.util.serializer.IndentingXMLWriter;
 import org.exist.util.serializer.SAXSerializer;
 import org.exist.util.serializer.XMLWriter;
 import org.exist.xmldb.XmldbURI;
@@ -56,8 +55,6 @@ import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
-
-import com.xmlcalabash.util.UserArgs;
 
 public class ProcessFunction extends BasicFunction {
 
@@ -148,7 +145,7 @@ public class ProcessFunction extends BasicFunction {
             }
             
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-            userArgs.setPipeline(bais, XmldbURI.LOCAL_DB);
+            userArgs.setPipeline(bais, XmldbURI.LOCAL_DB + "/");
             
         } else {
             userArgs.setPipeline(pipe.getStringValue());
@@ -167,9 +164,17 @@ public class ProcessFunction extends BasicFunction {
             
             Object key = getContext().getSource().getKey();
             if (key instanceof XmldbURI) {
-                staticBaseURI = new URI( ((XmldbURI) key).removeLastSegment().toString() );
+                
+                String uri = ((XmldbURI) key).removeLastSegment().toString();
+                
+                if (!uri.endsWith("/")) {
+                    uri += "/";
+                }
+                
+                staticBaseURI = new URI( "xmldb", null, uri, null );
+
             } else {
-                staticBaseURI = new URI( XmldbURI.LOCAL_DB );
+                staticBaseURI = new URI( XmldbURI.LOCAL_DB+"/" );
             }
             
             outputResult = XProcRunner.run(staticBaseURI, context.getBroker(), userArgs);
@@ -177,6 +182,10 @@ public class ProcessFunction extends BasicFunction {
         } catch (Exception e) {
             e.printStackTrace();
             throw new XPathException(this, e);
+        }
+        
+        if (outputResult == null || outputResult.isEmpty()) {
+            return Sequence.EMPTY_SEQUENCE;
         }
 
         StringReader reader = new StringReader(outputResult);
