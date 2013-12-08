@@ -27,8 +27,8 @@ let $doc-node-xproc as document-node() := document {
   </p:declare-step>
 }
 
-let $external-uri-abs as xs:string := 'xmldb:///db/xproc-test/xproc-test-1.xpl'
-let $external-uri-rel as xs:string := 'xproc-test-1.xpl'
+let $external-uri-abs as xs:string := 'xmldb:///db/xproc-test/test-xproc-1.xpl'
+let $external-uri-rel as xs:string := 'test-xproc-1.xpl'
 
 return
 <XProcTest>
