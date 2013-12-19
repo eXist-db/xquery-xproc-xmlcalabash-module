@@ -174,7 +174,22 @@ public class ProcessFunction extends BasicFunction {
                 staticBaseURI = new URI( "xmldb", null, uri, null );
 
             } else {
-                staticBaseURI = new URI( XmldbURI.LOCAL_DB+"/" );
+                
+                String uri = getContext().getModuleLoadPath();
+                if (uri == null || uri.isEmpty()) {
+                    staticBaseURI = new URI( XmldbURI.LOCAL_DB+"/" );
+                    
+                } else {
+                    
+                    if (uri.startsWith(XmldbURI.EMBEDDED_SERVER_URI_PREFIX)) {
+                        uri = uri.substring(XmldbURI.EMBEDDED_SERVER_URI_PREFIX.length());
+                    }
+                    if (!uri.endsWith("/")) {
+                        uri += "/";
+                    }
+                    
+                    staticBaseURI = new URI( "xmldb", null, uri, null );
+                }
             }
             
             outputResult = XProcRunner.run(staticBaseURI, context.getBroker(), userArgs);

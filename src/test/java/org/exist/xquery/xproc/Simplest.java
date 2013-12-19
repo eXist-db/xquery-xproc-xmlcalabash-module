@@ -138,6 +138,46 @@ public class Simplest {
             pool.release(broker);
         }
     }
+    
+    @Test
+    public void test03() {
+        
+        DBBroker broker = null;
+        try {
+            broker = pool.get(pool.getSecurityManager().getSystemSubject());
+            assertNotNull(broker);
+            
+            XQuery xquery = broker.getXQueryService();
+            assertNotNull(xquery);
+            Sequence seq = xquery.execute(
+                "let $simple-xproc as document-node() := document {"
+                + "<p:declare-step xmlns:p=\"http://www.w3.org/ns/xproc\" xmlns:c=\"http://www.w3.org/ns/xproc-step\" version=\"1.0\">"
+                + " <p:input port=\"source\">"
+                + "     <p:inline>"
+                + "         <doc>Hello world!</doc>"
+                + "     </p:inline>"
+                + "    </p:input>"
+                + " <p:output port=\"result\"/>"
+                + "     <p:identity/>"
+                + " </p:declare-step>"
+                + "}\n"
+                + "return xproc:process($simple-xproc)",
+                null, AccessContext.TEST
+            );
+            assertNotNull(seq);
+            assertEquals(1, seq.getItemCount());
+            
+            String result = queryResult2String(broker, seq);
+            
+            System.out.println(result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.getMessage());
+        } finally {
+            pool.release(broker);
+        }
+    }
 
     
     private final static String STORE = "<?xml version='1.0'?>" +
