@@ -67,6 +67,12 @@ public class ProcessFunction extends BasicFunction {
     private final static  FunctionParameterSequenceType PIPELINE = 
             new FunctionParameterSequenceType("pipeline", Type.ITEM, Cardinality.EXACTLY_ONE, "XProc Pipeline");
     
+    private final static  FunctionParameterSequenceType PRIMARY_INPUT = 
+            new FunctionParameterSequenceType("primary-input", Type.ITEM, Cardinality.EXACTLY_ONE, "Primary input");
+
+    private final static  FunctionParameterSequenceType OPTIONS = 
+            new FunctionParameterSequenceType("options", Type.NODE, Cardinality.ZERO_OR_MORE, "Options");
+
     private final static FunctionReturnSequenceType RETURN = new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_ONE, "return type");
 
     public final static FunctionSignature signaturies[] = {
@@ -83,20 +89,20 @@ public class ProcessFunction extends BasicFunction {
             DESCRIPTION,
             new SequenceType[] {
                 PIPELINE,
-                new FunctionParameterSequenceType("options", Type.NODE, Cardinality.ZERO_OR_MORE, "Options"),
+                OPTIONS,
             },
             RETURN
         ),
-//        new FunctionSignature(
-//            NAME,
-//            DESCRIPTION,
-//            new SequenceType[] {
-//                PIPELINE,
-//                new FunctionParameterSequenceType("output", Type.STRING, Cardinality.EXACTLY_ONE, "Output result")
-//            },
-//            RETURN
-//        ),
-        
+        new FunctionSignature(
+            NAME,
+            DESCRIPTION,
+            new SequenceType[] {
+                PIPELINE,
+                PRIMARY_INPUT,
+                OPTIONS,
+            },
+            RETURN
+        )
     };
     
     public ProcessFunction(XQueryContext context, FunctionSignature signature) {
@@ -151,8 +157,55 @@ public class ProcessFunction extends BasicFunction {
             userArgs.setPipeline(pipe.getStringValue());
         }
 
+        //prepare primary input
+        if (args.length > 2) {
+            Sequence input = args[1];
+
+            if(Type.subTypeOf(input.getItemType(), Type.NODE)) {
+                
+                if (input.getItemCount() != 1) {
+                    throw new XPathException(this, "Primary input must have just ONE and only ONE element.");
+                }
+                
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                OutputStreamWriter osw;
+                try {
+                    osw = new OutputStreamWriter( baos, "UTF-8" );
+                } catch( UnsupportedEncodingException e ) {
+                    throw new XPathException( this, "Internal error" );
+                }
+                
+                XMLWriter xmlWriter = new XMLWriter( osw );
+                
+                SAXSerializer sax = new SAXSerializer();
+                
+                sax.setReceiver( xmlWriter );
+                
+                try {
+                    input.itemAt(0).toSAX( context.getBroker(), sax, new Properties() );
+                    osw.flush();
+                    osw.close();
+                } catch( Exception e ) {
+                    throw new XPathException(this, e);
+                }
+                
+                ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+                try {
+                    userArgs.addInput("-", bais, XmldbURI.LOCAL_DB + "/", com.xmlcalabash.util.Input.Type.XML);
+                } catch (IOException e) {
+                    throw new XPathException(this, e);
+                }
+                
+            } else {
+                userArgs.addInput("-", input.getStringValue(), com.xmlcalabash.util.Input.Type.XML);
+            }
+        }
+
+        //parse options
         if (args.length > 1) {
             parseOptions(userArgs, args[1]);
+        } else if (args.length > 2) {
+            parseOptions(userArgs, args[2]);
         }
 
         String outputResult;
@@ -171,7 +224,7 @@ public class ProcessFunction extends BasicFunction {
                     uri += "/";
                 }
                 
-                staticBaseURI = new URI( "xmldb", null, uri, null );
+                staticBaseURI = new URI( "xmldb", "", uri, null );
 
             } else {
                 
@@ -188,7 +241,7 @@ public class ProcessFunction extends BasicFunction {
                         uri += "/";
                     }
                     
-                    staticBaseURI = new URI( "xmldb", null, uri, null );
+                    staticBaseURI = new URI( "xmldb", "", uri, null );
                 }
             }
             
