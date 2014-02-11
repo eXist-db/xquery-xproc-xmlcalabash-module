@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.exist-db</groupId>
 	<artifactId>XMLCalabash</artifactId>
-	<version>0.1.5-SNAPSHOT</version>
+	<version>0.1.7-SNAPSHOT</version>
 	<url>http://www.exist-db.org</url>
 
 	<organization>
@@ -18,7 +18,6 @@
 			<artifactId>existdb-core</artifactId>
 			<version>2.1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.xmlcalabash</groupId>
 			<artifactId>xmlcalabash-saxon94</artifactId>

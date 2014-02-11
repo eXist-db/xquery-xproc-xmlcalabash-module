@@ -34,6 +34,7 @@ public class Module extends AbstractInternalModule {
     private final static FunctionDef[] functions = {
             new FunctionDef(ProcessFunction.signaturies[0], ProcessFunction.class),
             new FunctionDef(ProcessFunction.signaturies[1], ProcessFunction.class),
+            new FunctionDef(ProcessFunction.signaturies[2], ProcessFunction.class),
         };
 
     public Module(Map<String, List<? extends Object>> parameters) {
