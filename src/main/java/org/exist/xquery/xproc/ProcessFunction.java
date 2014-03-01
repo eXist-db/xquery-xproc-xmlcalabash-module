@@ -21,6 +21,7 @@ package org.exist.xquery.xproc;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
@@ -156,6 +157,8 @@ public class ProcessFunction extends BasicFunction {
         } else {
             userArgs.setPipeline(pipe.getStringValue());
         }
+        
+        InputStream defaultIn = null;
 
         //prepare primary input
         if (args.length > 2) {
@@ -189,23 +192,18 @@ public class ProcessFunction extends BasicFunction {
                     throw new XPathException(this, e);
                 }
                 
-                ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-                try {
-                    userArgs.addInput("-", bais, XmldbURI.LOCAL_DB + "/", com.xmlcalabash.util.Input.Type.XML);
-                } catch (IOException e) {
-                    throw new XPathException(this, e);
-                }
+                defaultIn = new ByteArrayInputStream(baos.toByteArray());
                 
             } else {
-                userArgs.addInput("-", input.getStringValue(), com.xmlcalabash.util.Input.Type.XML);
+                defaultIn = new ByteArrayInputStream(input.getStringValue().getBytes());
             }
         }
 
         //parse options
-        if (args.length > 1) {
-            parseOptions(userArgs, args[1]);
-        } else if (args.length > 2) {
+        if (args.length > 2) {
             parseOptions(userArgs, args[2]);
+        } else if (args.length > 1) {
+            parseOptions(userArgs, args[1]);
         }
 
         String outputResult;
@@ -245,7 +243,7 @@ public class ProcessFunction extends BasicFunction {
                 }
             }
             
-            outputResult = XProcRunner.run(staticBaseURI, context.getBroker(), userArgs);
+            outputResult = XProcRunner.run(staticBaseURI, context.getBroker(), userArgs, defaultIn);
 
         } catch (Exception e) {
             e.printStackTrace();

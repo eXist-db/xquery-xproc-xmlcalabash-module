@@ -217,13 +217,37 @@ public class ExternalTests {
         runTest(
             xq, 
             "<XProcTest>"
-            + "<DefaultOption>"
-                + "<OptionsHere xmlns:c=\"http://www.w3.org/ns/xproc-step\" option-passed-extra=\"option-default-value-extra\" option-passed=\"option-default-value\"/>"
-            + "</DefaultOption>"
-            + "<PassedOption>"
-                + "<OptionsHere xmlns:c=\"http://www.w3.org/ns/xproc-step\" option-passed-extra=\"passed-value-for-option-extra\" option-passed=\"passed-value-for-option\"/>"
-            + "</PassedOption>"
+            + "<OutputStore>"
+            + "<c:result xmlns:c=\"http://www.w3.org/ns/xproc-step\">xmldb:exist:///db/xproc-test/OUT-STORE.xml</c:result>"
+            + "</OutputStore>"
             + "</XProcTest>"
+        );
+    }
+
+    @Test
+    public void test_8() throws Exception {
+        
+        storeXML("test-xproc-8.xpl");
+        BinaryDocument xq = storeBinary("test-8.xql");
+        
+        runTest(
+            xq, 
+            "<XProcTest>"
+            + "<OutputStore>"
+            + "<c:result xmlns:c=\"http://www.w3.org/ns/xproc-step\">xmldb:exist:///db/xproc-test/OUT-STORE.xml</c:result>"
+            + "</OutputStore>"
+            + "</XProcTest>"
+        );
+    }
+
+    @Test
+    public void test_9() throws Exception {
+        
+        BinaryDocument xq = storeBinary("test-9.xql");
+        
+        runTest(
+            xq, 
+            "<XProcTest><A/></XProcTest>"
         );
     }
 

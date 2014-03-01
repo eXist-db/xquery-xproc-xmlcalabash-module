@@ -1,3 +1,7 @@
 /target
 /bin
 /webapp
+/autodeploy
+/lib
+/tools
+/conf.xml

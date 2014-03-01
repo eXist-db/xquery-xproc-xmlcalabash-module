@@ -23,13 +23,11 @@ import static com.xmlcalabash.core.XProcConstants.c_data;
 import static com.xmlcalabash.util.Output.Kind.OUTPUT_STREAM;
 import static java.lang.String.format;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -68,17 +66,17 @@ public class XProcRunner {
     
     private static Logger logger = Logger.getLogger(XProcRunner.class.getName());
 
-    public static final String run(URI staticBaseURI, DBBroker broker, UserArgs userArgs) throws Exception {
+    public static final String run(URI staticBaseURI, DBBroker broker, UserArgs userArgs, InputStream defaultIn) throws Exception {
         XProcConfiguration config = new XProcConfiguration();
         
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         
-        run(staticBaseURI, byteStream, userArgs, config);
+        run(staticBaseURI, defaultIn, byteStream, userArgs, config);
         
         return byteStream.toString();
     }
     
-    protected static boolean run(URI staticBaseURI, ByteArrayOutputStream byteStream, UserArgs userArgs, XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
+    protected static boolean run(URI staticBaseURI, InputStream defaultIn, ByteArrayOutputStream byteStream, UserArgs userArgs, XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
         XProcRuntime runtime = new XProcRuntime(config);
         
         if (staticBaseURI != null) {
@@ -229,10 +227,10 @@ public class XProcRunner {
             }
         }
 
-        if (implicitPort != null && !pipeline.hasReadablePipes(implicitPort)) {
-            throw new XProcException("no implicitPort or it is not readable.");
-//            XdmNode doc = runtime.parse(new InputSource(System.in));
-//            pipeline.writeTo(implicitPort, doc);
+        if (implicitPort != null && !pipeline.hasReadablePipes(implicitPort) && defaultIn != null) {
+//            throw new XProcException("no implicitPort or it is not readable.");
+            XdmNode doc = runtime.parse(new InputSource(defaultIn));
+            pipeline.writeTo(implicitPort, doc);
         }
 
         Map<String, Output> portOutputs = new HashMap<String, Output>();

@@ -12,6 +12,7 @@ let $simple-xproc as document-node() := document {
   </p:input>
   <p:output port="result"/>
   <p:store href="xmldb:exist:///db/xproc-test/OUT-STORE.xml" method="xml" name="step-store"/>
+  
   <p:identity>
     <p:input port="source">
       <p:pipe port="result" step="step-store"/>
