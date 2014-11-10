@@ -1,6 +1,5 @@
 #XProc in eXist
-* March 2014
-* Erik Siegel erik at xatapult.nl
+_written by Erik Siegel (erik at xatapult.nl) in March 2014_
 
 
 ## Introduction
@@ -41,19 +40,19 @@ Here is a very simple “Hello World” XProc in eXist:
 import module namespace xproc="http://exist-db.org/xproc";
 
 let $simple-xproc as document-node() := document {
-  \<p:declare-step xmlns:p="http://www.w3.org/ns/xproc" version="1.0">
-    \<p:input port="source">
-      \<p:inline>
-        \<doc>Hello world!\</doc>
-      \</p:inline>
-    \</p:input>
-    \<p:output port="result"/>
-    \<p:identity/>
-  \</p:declare-step>
+    \<p:declare-step xmlns:p="http://www.w3.org/ns/xproc" version="1.0">
+            \<p:input port="source">
+                    \<p:inline>
+                            \<doc>Hello world!\</doc>
+                    \</p:inline>
+            \</p:input>
+            \<p:output port="result"/>
+            \<p:identity/>
+    \</p:declare-step>
 }
 
 return
-  xproc:process($simple-xproc)
+    xproc:process($simple-xproc)
 ```
 
 To use the XProc module, you first need to import the module with its namespace *http://exist-db.org/xproc*
@@ -79,15 +78,20 @@ The module exposes three xproc:process variants:
 The processing options argument *$options* is a sequence of elements, so you can pass multiple processing options. For instance:
 
 ```xquery
-xproc:process( $xproc, (\<option name="someoption" value="somevalue"/>, \<input type="xml" port="extrainputport" url="input.xml"/>) )
+xproc:process( $xproc, (
+                \<option name="someoption" value="somevalue"/>, 
+                \<input type="xml" port="extrainputport" url="input.xml"/>) 
+            )
 ```
   
-### Passing options
+### <g options
 You can pass values for XProc options to the pipeline using:
+
+
 
 ```xml
 \<option name="option-name" value="option-value"/>
-``` 
+```
 
 You have to limit yourself to string values. Options in a namespace are not supported.
 
@@ -96,7 +100,9 @@ You have to limit yourself to string values. Options in a namespace are not supp
 You can connect the input ports to documents (only to full documents, not to XML fragments):
 
 ```xml
-\<input type="xml | data" port="portname" url="url"/>
+\<input type="xml | data" 
+            port="portname" 
+            url="url"/>
 ```
 
 * When *type="xml"* the document pointed to by the *url* attribute must be a well-formed XML document. It can be absolute or relative. Relative URL’s are resolved against the location of the XQuery script.
@@ -104,7 +110,9 @@ You can connect the input ports to documents (only to full documents, not to XML
 
 Example:
 ```xml
-\<input type="xml" port="source" url="xmldb:exist:///db/path/to/my/xmldocument.xml"/>
+\<input type="xml" 
+            port="source" 
+            url="xmldb:exist:///db/path/to/my/xmldocument.xml"/>
 ```
 
 ### Connecting output ports
@@ -137,5 +145,5 @@ The XProc *\<p:store>* step works and can write documents to the database. The U
 
 ## Known limitations
 * Probably the most important limitation is that the XQuery scripts called/used by the XProc pipelines do *not* run on eXist’s XQuery engine but on Saxon inside Calabash. As a consequence, you cannot easily access the database or use eXist’s extension functions. XPath in structions will not use any indexes and will not be optimized. 
-* The *&lt;pxp:zip&gt;* instruction does not work properly (but the *&lt;pxp:unzip&gt;* does).
+* The *<pxp:zip>* instruction does not work properly (but the *<pxp:unzip>* does).
 
