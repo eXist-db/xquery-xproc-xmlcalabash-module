@@ -1,5 +1,5 @@
-#XProc in eXist</title>
-* March 2014</date>
+#XProc in eXist
+* March 2014
 * Erik Siegel erik at xatapult.nl
 
 
@@ -14,7 +14,7 @@ There are several implementations of XProc, but the most used is probably Calaba
 To amend this and add XProc to the suite of X technologies supported by eXist, a new XProc module was developed in 2013/2014.
 
 ## Installing and de-installing
-The XProc module will only work on eXist versions > V2.1! That is, as long as the official download version is still V2.1, you need the most current version from eXist’s code repos itory. Refer to [http://exist-db.org/exist/apps/doc/building.xml](http://exist-db.org/exist/apps/doc/building.xml) for more information.</para>
+The XProc module will only work on eXist versions > V2.1! That is, as long as the official download version is still V2.1, you need the most current version from eXist’s code repos itory. Refer to [http://exist-db.org/exist/apps/doc/building.xml](http://exist-db.org/exist/apps/doc/building.xml) for more information.
 
 
 ### Install
@@ -64,7 +64,7 @@ In the above example the actual XProc script is embedded in the XQuery code as a
  * You could store it in a document in the database and pass it by absolute URI, e.g. *xmldb:exist:///db/path/to/my/xproc.xpl*
  * You could pass the document by relative URI. This will be resolved against the location of the XQuery script.
 
-Simply calling <literal>xproc:process</literal> will start Calabash and do the trick. The function’s result will be the result passed on the pipeline’s primary output port.
+Simply calling *xproc:process* will start Calabash and do the trick. The function’s result will be the result passed on the pipeline’s primary output port.
 
 
 ## xproc:process
@@ -82,11 +82,11 @@ The processing options argument *$options* is a sequence of elements, so you can
 xproc:process( $xproc, (\<option name="someoption" value="somevalue"/>, \<input type="xml" port="extrainputport" url="input.xml"/>) )
 ```
   
-### Passing options</title>
+### Passing options
 You can pass values for XProc options to the pipeline using:
 
 ```xml
-<option name="option-name" value="option-value"/>
+\<option name="option-name" value="option-value"/>
 ``` 
 
 You have to limit yourself to string values. Options in a namespace are not supported.
@@ -96,44 +96,44 @@ You have to limit yourself to string values. Options in a namespace are not supp
 You can connect the input ports to documents (only to full documents, not to XML fragments):
 
 ```xml
-<input type="xml | data" port="portname" url="url"/>
+\<input type="xml | data" port="portname" url="url"/>
 ```
 
 * When *type="xml"* the document pointed to by the *url* attribute must be a well-formed XML document. It can be absolute or relative. Relative URL’s are resolved against the location of the XQuery script.
-* When *type="data"* the document pointed to by the *url* attribute will be available to the XProc processor base64 encoded, wrapped in a *<c:data>* element. For unknown reasons, *type="data"* does not accept relative URL’s.
+* When *type="data"* the document pointed to by the *url* attribute will be available to the XProc processor base64 encoded, wrapped in a *\<c:data>* element. For unknown reasons, *type="data"* does not accept relative URL’s.
 
 Example:
 ```xml
-<input type="xml" port="source" url="xmldb:exist:///db/path/to/my/xmldocument.xml"/>
+\<input type="xml" port="source" url="xmldb:exist:///db/path/to/my/xmldocument.xml"/>
 ```
 
-### Connecting output ports</title>
+### Connecting output ports
 
 Besides the results of the primary output port (which is returned as the function’s result), you can also catch the results of other output ports:
 
 ```xml
-<output port="portname" url="url"/>
+\<output port="portname" url="url"/>
 ```
 
 * The URL must be an absolute URL pointing to a location in the database
 * **Watch out:** It must begin with the prefix *xmldb://* (instead of the usual *xmldb:exist://*)
-* When the collection the URL points to does not exist or cannot be written to, an exception will be raised. <
+* When the collection the URL points to does not exist or cannot be written to, an exception will be raised. 
 
 Example:
 
 ```xml
-<output port="extraresult" url="xmldb:///db/path/to/my/data.xml"/>
+\<output port="extraresult" url="xmldb:///db/path/to/my/data.xml"/>
 ```
 
 
 
 
-## Additional features</title>
+## Additional features
 Relative URL’s inside your XProc script (and inside the XSLT/XQuery scripts used by the pipeline) work as expected: That is: they are resolved against the location of the document they’re in. This is an important feature because it allows you to develop your XProc pipelines outside of eXist and easily integrate them when they’re ready. 
 
 Developing XProc pipelines outside of eXist (using an IDE like for instance oXygen) is usually much easier than doing the same thing directly in/on the database.
 
-The XProc *<p:store>* step works and can write documents to the database. The URL must be an absolute URL pointing to a location in the database. **Watch out:** It must begin with the pre fix *xmldb://* (instead of the usual *xmldb:exist://*).
+The XProc *\<p:store>* step works and can write documents to the database. The URL must be an absolute URL pointing to a location in the database. **Watch out:** It must begin with the pre fix *xmldb://* (instead of the usual *xmldb:exist://*).
 
 ## Known limitations
 * Probably the most important limitation is that the XQuery scripts called/used by the XProc pipelines do *not* run on eXist’s XQuery engine but on Saxon inside Calabash. As a consequence, you cannot easily access the database or use eXist’s extension functions. XPath in structions will not use any indexes and will not be optimized. 
