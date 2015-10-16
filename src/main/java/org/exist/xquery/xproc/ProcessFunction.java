@@ -33,11 +33,12 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.exist.Namespaces;
 import org.exist.dom.QName;
-import org.exist.memtree.DocumentImpl;
-import org.exist.memtree.SAXAdapter;
+import org.exist.dom.memtree.DocumentImpl;
+import org.exist.dom.memtree.SAXAdapter;
 import org.exist.util.serializer.SAXSerializer;
 import org.exist.util.serializer.XMLWriter;
 import org.exist.xmldb.XmldbURI;
@@ -60,7 +61,7 @@ import org.xml.sax.XMLReader;
 public class ProcessFunction extends BasicFunction {
 
     @SuppressWarnings("unused")
-    private final static Logger logger = Logger.getLogger(ProcessFunction.class);
+    private final static Logger logger = LogManager.getLogger(ProcessFunction.class);
     
     private final static QName NAME = new QName("process", Module.NAMESPACE_URI, Module.PREFIX);
     private final static String DESCRIPTION = "Function which invokes xmlcalabash XProc processor.";

@@ -26,13 +26,35 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.lang.reflect.Array;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.xml.transform.Source;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.URIResolver;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.sax.SAXResult;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TemplatesHandler;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -43,6 +65,10 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.exist.storage.DBBroker;
 import org.exist.util.io.Resource;
 import org.xml.sax.InputSource;
+import org.exist.xmldb.XmldbURI;
+import org.exist.security.Permission;
+import org.exist.security.PermissionDeniedException;
+import org.exist.dom.persistent.DocumentImpl;
 
 import com.xmlcalabash.core.XProcConfiguration;
 import com.xmlcalabash.core.XProcException;
@@ -64,7 +90,7 @@ import com.xmlcalabash.util.Output.Kind;
  */
 public class XProcRunner {
     
-    private static Logger logger = Logger.getLogger(XProcRunner.class.getName());
+    private static Logger logger = LogManager.getLogger(XProcRunner.class.getName());
 
     public static final String run(URI staticBaseURI, DBBroker broker, UserArgs userArgs, InputStream defaultIn) throws Exception {
         XProcConfiguration config = new XProcConfiguration();
@@ -80,8 +106,9 @@ public class XProcRunner {
         XProcRuntime runtime = new XProcRuntime(config);
         
         if (staticBaseURI != null) {
-            runtime.setStaticBaseURI(staticBaseURI);
-            runtime.setBaseURI(staticBaseURI);
+            runtime.setURIResolver(new ExternalResolver(staticBaseURI.toString()));
+//            runtime.setStaticBaseURI(staticBaseURI);
+//            runtime.setBaseURI(staticBaseURI);
         }
 
         boolean debug = config.debug;
@@ -418,6 +445,35 @@ public class XProcRunner {
 //    }
 
     private static void finest(Logger logger, XdmNode node, String message) {
-        logger.finest(message(node, message));
+        logger.trace(message(node, message));
     }
+
+    private static class ExternalResolver implements URIResolver {
+        
+        private String baseURI;
+        
+        public ExternalResolver(String base) {
+            this.baseURI = base;
+        }
+        
+        /* (non-Javadoc)
+         * @see javax.xml.transform.URIResolver#resolve(java.lang.String, java.lang.String)
+         */
+        public Source resolve(String href, String base)
+        throws TransformerException {
+            URL url;
+            try {
+                //TODO : use dedicated function in XmldbURI
+                url = new URL(baseURI + "/"  + href);
+                final URLConnection connection = url.openConnection();
+                return new StreamSource(connection.getInputStream());
+            } catch (final MalformedURLException e) {
+                return null;
+            } catch (final IOException e) {
+                return null;
+            }
+        }
+    }
+
+    
 }
