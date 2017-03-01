@@ -17,12 +17,12 @@
         <dependency>
             <groupId>org.exist-db</groupId>
             <artifactId>exist-core</artifactId>
-            <version>3.0.RC2</version>
+            <version>3.0</version>
         </dependency>
         <dependency>
             <groupId>com.xmlcalabash</groupId>
             <artifactId>xmlcalabash</artifactId>
-            <version>1.1.9-96</version>
+            <version>1.1.15-96</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
