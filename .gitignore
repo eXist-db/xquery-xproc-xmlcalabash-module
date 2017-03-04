@@ -1,7 +1,4 @@
-/target
-/bin
-/webapp
-/autodeploy
-/lib
-/tools
-/conf.xml
+target/
+.idea/
+*.iml
+.DS_Store

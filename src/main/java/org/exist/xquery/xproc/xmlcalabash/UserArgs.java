@@ -1,4 +1,21 @@
-package org.exist.xquery.xproc;
+/**
+ * XProc Calabash Module - Calabash XProc Module for eXist-db XQuery
+ * Copyright © 2013 The eXist Project (exit-open@lists.sourceforge.net)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package org.exist.xquery.xproc.xmlcalabash;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -8,6 +25,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,9 +86,9 @@ import static java.util.Collections.unmodifiableSet;
 import static net.sf.saxon.s9api.QName.fromClarkName;
 
 public class UserArgs {
-    
+
     protected URI baseURI;
-    
+
     protected boolean needsCheck = false;
     protected Boolean debug = null;
     protected Output profile = null;
@@ -94,19 +113,16 @@ public class UserArgs {
     protected boolean useXslt10 = false;
     protected boolean transparentJSON = false;
     protected String jsonFlavor = null;
-    
-    public UserArgs() {
-    }
 
-    public void setBaseURI(URI baseURI) {
+    public void setBaseURI(final URI baseURI) {
         this.baseURI = baseURI;
     }
 
-    public void setDebug(boolean debug) {
+    public void setDebug(final boolean debug) {
         this.debug = debug;
     }
 
-    protected void setProfile(Output profile) {
+    protected void setProfile(final Output profile) {
         needsCheck = true;
         if ((this.profile != null) && (profile != null)) {
             throw new XProcException("Multiple profile are not supported.");
@@ -114,7 +130,7 @@ public class UserArgs {
         this.profile = profile;
     }
 
-    public void setProfile(String profile) {
+    public void setProfile(final String profile) {
         if ("-".equals(profile)) {
             setProfile(new Output(System.out));
         } else {
@@ -122,7 +138,7 @@ public class UserArgs {
         }
     }
 
-    public void setProfile(OutputStream outputStream) {
+    public void setProfile(final OutputStream outputStream) {
         setProfile(new Output(outputStream));
     }
 
@@ -130,19 +146,19 @@ public class UserArgs {
         return showVersion;
     }
 
-    public void setShowVersion(boolean showVersion) {
+    public void setShowVersion(final boolean showVersion) {
         this.showVersion = showVersion;
     }
 
-    public void setSaxonProcessor(String saxonProcessor) {
+    public void setSaxonProcessor(final String saxonProcessor) {
         needsCheck = true;
         this.saxonProcessor = saxonProcessor;
-        if ( !("he".equals(saxonProcessor) || "pe".equals(saxonProcessor) || "ee".equals(saxonProcessor)) ) {
+        if (!("he".equals(saxonProcessor) || "pe".equals(saxonProcessor) || "ee".equals(saxonProcessor))) {
             throw new XProcException("Invalid Saxon processor option: '" + saxonProcessor + "'. Must be 'he' (default), 'pe' or 'ee'.");
         }
     }
 
-    protected void setSaxonConfig(Input saxonConfig) {
+    protected void setSaxonConfig(final Input saxonConfig) {
         needsCheck = true;
         if ((this.saxonConfig != null) && (saxonConfig != null)) {
             throw new XProcException("Multiple saxonConfig are not supported.");
@@ -150,7 +166,7 @@ public class UserArgs {
         this.saxonConfig = saxonConfig;
     }
 
-    public void setSaxonConfig(String saxonConfig) {
+    public void setSaxonConfig(final String saxonConfig) {
         if ("-".equals(saxonConfig)) {
             setSaxonConfig(new Input(System.in, "<stdin>"));
         } else {
@@ -158,27 +174,27 @@ public class UserArgs {
         }
     }
 
-    public void setSaxonConfig(InputStream inputStream, String uri) {
+    public void setSaxonConfig(final InputStream inputStream, final String uri) {
         setSaxonConfig(new Input(inputStream, uri));
     }
 
-    public void setSchemaAware(boolean schemaAware) {
+    public void setSchemaAware(final boolean schemaAware) {
         needsCheck = true;
         this.schemaAware = schemaAware;
     }
 
-    public void setSafeMode(boolean safeMode) {
+    public void setSafeMode(final boolean safeMode) {
         this.safeMode = safeMode;
     }
 
-    public void setConfig(Input config) {
+    public void setConfig(final Input config) {
         if ((this.config != null) && (config != null)) {
             throw new XProcException("Multiple config are not supported.");
         }
         this.config = config;
     }
 
-    public void setConfig(String config) {
+    public void setConfig(final String config) {
         if ("-".equals(config)) {
             setConfig(new Input(System.in, "<stdin>"));
         } else {
@@ -186,23 +202,23 @@ public class UserArgs {
         }
     }
 
-    public void setConfig(InputStream inputStream, String uri) {
+    public void setConfig(final InputStream inputStream, final String uri) {
         setConfig(new Input(inputStream, uri));
     }
 
-    public void setLogStyle(String logStyle) {
+    public void setLogStyle(final String logStyle) {
         this.logStyle = logStyle;
         if (!("off".equals(logStyle) || "plain".equals(logStyle)
-              || "wrapped".equals(logStyle) || "directory".equals(logStyle))) {
+                || "wrapped".equals(logStyle) || "directory".equals(logStyle))) {
             throw new XProcException("Invalid log style: '" + logStyle + "'. Must be 'off', 'plain', 'wrapped' (default) or 'directory'.");
         }
     }
 
-    public void setEntityResolverClass(String entityResolverClass) {
+    public void setEntityResolverClass(final String entityResolverClass) {
         this.entityResolverClass = entityResolverClass;
     }
 
-    public void setUriResolverClass(String uriResolverClass) {
+    public void setUriResolverClass(final String uriResolverClass) {
         this.uriResolverClass = uriResolverClass;
     }
 
@@ -211,7 +227,7 @@ public class UserArgs {
         return pipeline;
     }
 
-    private void setPipeline(Input pipeline) {
+    private void setPipeline(final Input pipeline) {
         needsCheck = true;
         if ((this.pipeline != null) && (pipeline != null)) {
             throw new XProcException("Multiple pipelines are not supported.");
@@ -219,20 +235,20 @@ public class UserArgs {
         this.pipeline = pipeline;
     }
 
-    public void setPipeline(String uri) {
+    public void setPipeline(final String uri) {
         setPipeline(new Input(uri));
     }
 
-    public void setPipeline(InputStream inputStream, String uri) {
+    public void setPipeline(final InputStream inputStream, final String uri) {
         setPipeline(new Input(inputStream, uri));
     }
 
-    public void addLibrary(String libraryURI) {
+    public void addLibrary(final String libraryURI) {
         needsCheck = true;
         libraries.add(new Input(libraryURI));
     }
 
-    public void addLibrary(InputStream libraryInputStream, String libraryURI) {
+    public void addLibrary(final InputStream libraryInputStream, final String libraryURI) {
         needsCheck = true;
         libraries.add(new Input(libraryInputStream, libraryURI));
     }
@@ -242,7 +258,7 @@ public class UserArgs {
         return unmodifiableMap(outputs);
     }
 
-    public void addOutput(String port, String uri) {
+    public void addOutput(final String port, final String uri) {
         if (outputs.containsKey(port)) {
             if (port == null) {
                 throw new XProcException("Duplicate output binding for default output port.");
@@ -258,7 +274,7 @@ public class UserArgs {
         }
     }
 
-    public void addOutput(String port, OutputStream outputStream) {
+    public void addOutput(final String port, final OutputStream outputStream) {
         if (outputs.containsKey(port)) {
             if (port == null) {
                 throw new XProcException("Duplicate output binding for default output port.");
@@ -270,7 +286,7 @@ public class UserArgs {
         outputs.put(port, new Output(outputStream));
     }
 
-    public void addBinding(String prefix, String uri) {
+    public void addBinding(final String prefix, final String uri) {
         if (bindings.containsKey(prefix)) {
             throw new XProcException("Duplicate prefix binding: '" + prefix + "'.");
         }
@@ -278,7 +294,7 @@ public class UserArgs {
         bindings.put(prefix, uri);
     }
 
-    public void setCurStepName(String name) {
+    public void setCurStepName(final String name) {
         needsCheck = true;
         curStep.setName(name);
         steps.add(curStep);
@@ -295,7 +311,7 @@ public class UserArgs {
         return unmodifiableSet(curStep.inputs.keySet());
     }
 
-    public List<Input> getInputs(String port) {
+    public List<Input> getInputs(final String port) {
         checkArgs();
         if (steps.size() != 0) {
             // If we built a compound pipeline from the arguments, then there aren't any pipeline inputs
@@ -304,11 +320,11 @@ public class UserArgs {
         return unmodifiableList(curStep.inputs.get(port));
     }
 
-    public void addInput(String port, String uri, Type type) {
+    public void addInput(final String port, final String uri, final Type type) {
         addInput(port, uri, type, null);
     }
 
-    public void addInput(String port, String uri, Type type, String contentType) {
+    public void addInput(final String port, final String uri, final Type type, final String contentType) {
         if ("-".equals(uri) || uri.startsWith("http:") || uri.startsWith("https:") || uri.startsWith("file:")
                 || "p:empty".equals(uri)) {
             curStep.addInput(port, uri, type, contentType);
@@ -317,18 +333,18 @@ public class UserArgs {
         }
     }
 
-    public void addInput(String port, InputStream inputStream, String uri, Type type) throws IOException {
+    public void addInput(final String port, final InputStream inputStream, final String uri, final Type type) throws IOException {
         addInput(port, inputStream, uri, type, null);
     }
 
-    public void addInput(String port, InputStream inputStream, String uri, Type type, String contentType) throws IOException {
-        inputStream = new BufferedInputStream(inputStream);
-        contentType = ((contentType == null) || "content/unknown".equals(contentType)) ? guessContentTypeFromStream(inputStream) : contentType;
-        contentType = ((contentType == null) || "content/unknown".equals(contentType)) ? guessContentTypeFromName(uri) : contentType;
-        curStep.addInput(port, inputStream, uri, type, contentType);
+    public void addInput(final String port, final InputStream inputStream, final String uri, final Type type, final String contentType) throws IOException {
+        InputStream bis = new BufferedInputStream(inputStream);
+        String ct = ((contentType == null) || "content/unknown".equals(contentType)) ? guessContentTypeFromStream(bis) : contentType;
+        ct = ((ct == null) || "content/unknown".equals(ct)) ? guessContentTypeFromName(uri) : contentType;
+        curStep.addInput(port, bis, uri, type, ct);
     }
 
-    public void setDefaultInputPort(String port) {
+    public void setDefaultInputPort(final String port) {
         if (curStep.inputs.containsKey(null)) {
             curStep.inputs.put(port, curStep.inputs.remove(null));
         }
@@ -343,7 +359,7 @@ public class UserArgs {
         return unmodifiableSet(curStep.params.keySet());
     }
 
-    public Map<QName, String> getParameters(String port) {
+    public Map<QName, String> getParameters(final String port) {
         checkArgs();
         if (steps.size() != 0) {
             // If we built a compound pipeline from the arguments, then there aren't any pipeline parameters
@@ -352,7 +368,7 @@ public class UserArgs {
         return unmodifiableMap(curStep.params.get(port));
     }
 
-    public void addParam(String name, String value) {
+    public void addParam(String name, final String value) {
         needsCheck = true;
         String port = "*";
 
@@ -365,7 +381,7 @@ public class UserArgs {
         curStep.addParameter(port, name, value);
     }
 
-    public void addParam(String port, String name, String value) {
+    public void addParam(final String port, final String name, final String value) {
         needsCheck = true;
         curStep.addParameter(port, name, value);
     }
@@ -379,7 +395,7 @@ public class UserArgs {
         return unmodifiableSet(curStep.options.keySet());
     }
 
-    public String getOption(QName name) {
+    public String getOption(final QName name) {
         checkArgs();
         if (steps.size() != 0) {
             // If we built a compound pipeline from the arguments, then there aren't any pipeline options
@@ -388,7 +404,7 @@ public class UserArgs {
         return curStep.options.get(name);
     }
 
-    public void addOption(String name, String value) {
+    public void addOption(final String name, final String value) {
         needsCheck = true;
         if (lastStep != null) {
             lastStep.addOption(name, value);
@@ -397,23 +413,23 @@ public class UserArgs {
         }
     }
 
-    public void setExtensionValues(boolean extensionValues) {
+    public void setExtensionValues(final boolean extensionValues) {
         this.extensionValues = extensionValues;
     }
 
-    public void setAllowXPointerOnText(boolean allowXPointerOnText) {
+    public void setAllowXPointerOnText(final boolean allowXPointerOnText) {
         this.allowXPointerOnText = allowXPointerOnText;
     }
 
-    public void setUseXslt10(boolean useXslt10) {
+    public void setUseXslt10(final boolean useXslt10) {
         this.useXslt10 = useXslt10;
     }
 
-    public void setTransparentJSON(boolean transparentJSON) {
+    public void setTransparentJSON(final boolean transparentJSON) {
         this.transparentJSON = transparentJSON;
     }
 
-    public void setJsonFlavor(String jsonFlavor) {
+    public void setJsonFlavor(final String jsonFlavor) {
         this.jsonFlavor = jsonFlavor;
         if ((jsonFlavor != null) && !knownFlavor(jsonFlavor)) {
             throw new XProcException("Unknown JSON flavor: '" + jsonFlavor + "'.");
@@ -424,7 +440,7 @@ public class UserArgs {
      * This method does some sanity checks and should be called at the
      * beginning of every public method that has a return value to make
      * sure that no invalid argument combinations are used.
-     *
+     * <p>
      * It is public so that it can also be invoked explicitly to control
      * the time when these checks are done.
      *
@@ -449,7 +465,7 @@ public class UserArgs {
                 throw new XProcException("Schema-aware processing can only be used with saxon processor \"ee\".");
             }
 
-            for (StepArgs step : steps) {
+            for (final StepArgs step : steps) {
                 step.checkArgs();
             }
 
@@ -461,7 +477,7 @@ public class UserArgs {
         }
     }
 
-    public XProcConfiguration createConfiguration() throws SaxonApiException {
+    public XProcConfiguration createConfiguration() throws SaxonApiException, IOException {
         checkArgs();
         XProcConfiguration config = null;
 
@@ -486,8 +502,8 @@ public class UserArgs {
         }
 
         if (this.config != null) {
+            InputStream instream = null;
             try {
-                InputStream instream;
                 switch (this.config.getKind()) {
                     case URI:
                         URI furi = URI.create(this.config.getUri());
@@ -503,7 +519,7 @@ public class UserArgs {
                 }
 
 
-                SAXSource source = new SAXSource(new InputSource(instream));
+                final SAXSource source = new SAXSource(new InputSource(instream));
                 // No resolver, we don't have one yet
                 DocumentBuilder builder = config.getProcessor().newDocumentBuilder();
                 XdmNode doc = builder.build(source);
@@ -512,6 +528,10 @@ public class UserArgs {
                 err.println("FATAL: Failed to parse configuration file.");
                 err.println(e);
                 exit(3);
+            } finally {
+                if (instream != null) {
+                    instream.close();
+                }
             }
         }
 
@@ -573,24 +593,21 @@ public class UserArgs {
         return hasImplicitPipelineInternal();
     }
 
-    public XdmNode getImplicitPipeline(XProcRuntime runtime) throws IOException {
+    public XdmNode getImplicitPipeline(final XProcRuntime runtime) throws IOException {
         checkArgs();
         // This is a bit of a hack...
         if (steps.size() == 0 && libraries.size() > 0) {
             try {
-                Input library = libraries.get(0);
+                final Input library = libraries.get(0);
                 if (library.getKind() == INPUT_STREAM) {
-                    InputStream libraryInputStream = library.getInputStream();
-                    File tempLibrary = createTempFile("calabashLibrary", null);
-                    tempLibrary.deleteOnExit();
-                    FileOutputStream fileOutputStream = new FileOutputStream(tempLibrary);
-                    fileOutputStream.getChannel().transferFrom(newChannel(libraryInputStream), 0, MAX_VALUE);
-                    fileOutputStream.close();
-                    libraryInputStream.close();
-                    libraries.set(0, new Input(tempLibrary.toURI().toASCIIString()));
+                    final Path tempLibrary = Files.createTempFile("calabashLibrary", "tmp");
+                    try (final InputStream libraryInputStream = library.getInputStream()) {
+                        Files.copy(libraryInputStream, tempLibrary);
+                        libraries.set(0, new Input(tempLibrary.toUri().toASCIIString()));
+                    }
                 }
 
-                XLibrary xLibrary = runtime.loadLibrary(libraries.get(0));
+                final XLibrary xLibrary = runtime.loadLibrary(libraries.get(0));
                 curStep.setName(xLibrary.getFirstPipelineType().getClarkName());
                 curStep.checkArgs();
                 steps.add(curStep);
@@ -599,7 +616,7 @@ public class UserArgs {
             }
         }
 
-        TreeWriter tree = new TreeWriter(runtime);
+        final TreeWriter tree = new TreeWriter(runtime);
         tree.startDocument(runtime.getStaticBaseURI());
         tree.addStartElement(p_declare_step);
         tree.addAttribute(new QName("version"), "1.0");
@@ -623,7 +640,7 @@ public class UserArgs {
             outputs.put("result", new Output("-"));
         }
 
-        String lastStepName = "cmdlineStep" + steps.size();
+        final String lastStepName = "cmdlineStep" + steps.size();
         for (String port : outputs.keySet()) {
             if (port == null) {
                 port = "result";
@@ -639,7 +656,7 @@ public class UserArgs {
             tree.addEndElement();
         }
 
-        for (Input library : libraries) {
+        for (final Input library : libraries) {
             switch (library.getKind()) {
                 case URI:
                     tree.addStartElement(p_import);
@@ -649,7 +666,7 @@ public class UserArgs {
                     break;
 
                 case INPUT_STREAM:
-                    InputStream libraryInputStream = library.getInputStream();
+                    final InputStream libraryInputStream = library.getInputStream();
                     File tempLibrary = createTempFile("calabashLibrary", null);
                     tempLibrary.deleteOnExit();
                     FileOutputStream fileOutputStream = new FileOutputStream(tempLibrary);
@@ -670,7 +687,7 @@ public class UserArgs {
 
         int stepNum = 0;
         for (StepArgs step : steps) {
-            stepNum ++;
+            stepNum++;
 
             tree.addStartElement(step.stepName);
             tree.addAttribute(new QName("name"), "cmdlineStep" + stepNum);
@@ -681,16 +698,16 @@ public class UserArgs {
 
             tree.startContent();
 
-            for (String port : step.inputs.keySet()) {
+            for (final String port : step.inputs.keySet()) {
                 tree.addStartElement(p_input);
                 tree.addAttribute(new QName("port"), (port == null) ? "source" : port);
                 tree.startContent();
 
-                for (Input input : step.inputs.get(port)) {
-                    QName qname = (input.getType() == DATA) ? p_data : p_document;
+                for (final Input input : step.inputs.get(port)) {
+                    final QName qname = (input.getType() == DATA) ? p_data : p_document;
                     switch (input.getKind()) {
                         case URI:
-                            String uri = input.getUri();
+                            final String uri = input.getUri();
 
                             if ("p:empty".equals(uri)) {
                                 tree.addStartElement(p_empty);
@@ -708,7 +725,7 @@ public class UserArgs {
                             break;
 
                         case INPUT_STREAM:
-                            InputStream inputStream = input.getInputStream();
+                            final InputStream inputStream = input.getInputStream();
                             if (System.in.equals(inputStream)) {
                                 tree.addStartElement(qname);
                                 tree.addAttribute(new QName("href"), "-");
@@ -718,9 +735,9 @@ public class UserArgs {
                                 tree.startContent();
                                 tree.addEndElement();
                             } else {
-                                File tempInput = createTempFile("calabashInput", null);
+                                final File tempInput = createTempFile("calabashInput", null);
                                 tempInput.deleteOnExit();
-                                FileOutputStream fileOutputStream = new FileOutputStream(tempInput);
+                                final FileOutputStream fileOutputStream = new FileOutputStream(tempInput);
                                 fileOutputStream.getChannel().transferFrom(newChannel(inputStream), 0, MAX_VALUE);
                                 fileOutputStream.close();
                                 inputStream.close();
@@ -742,8 +759,8 @@ public class UserArgs {
                 tree.addEndElement();
             }
 
-            for (String port : step.params.keySet()) {
-                for (QName pname : step.params.get(port).keySet()) {
+            for (final String port : step.params.keySet()) {
+                for (final QName pname : step.params.get(port).keySet()) {
                     String value = step.params.get(port).get(pname);
                     // Double single quotes to escape them between the enclosing single quotes
                     value = "'" + value.replace("'", "''") + "'";
@@ -772,14 +789,14 @@ public class UserArgs {
         return tree.getResult();
     }
 
-    private String fixUpURI(String uri) {
-        
+    private String fixUpURI(final String uri) {
+
         if (baseURI == null) {
             return uri;
         }
-        
+
         return baseURI.resolve(uri).toASCIIString();
-        
+
 //        File f = new File(uri);
 //        String fn = encode(f.getAbsolutePath());
 //        // FIXME: HACK!
@@ -792,34 +809,34 @@ public class UserArgs {
     private class StepArgs {
         public String plainStepName = null;
         public QName stepName = null;
-        public Map<String, List<Input>> inputs = new HashMap<String, List<Input>>();
-        public Map<String, Map<String, String>> plainParams = new HashMap<String, Map<String, String>>();
-        public Map<String, Map<QName, String>> params = new HashMap<String, Map<QName, String>>();
-        public Map<String, String> plainOptions = new HashMap<String, String>();
-        public Map<QName, String> options = new HashMap<QName, String>();
+        public Map<String, List<Input>> inputs = new HashMap<>();
+        public Map<String, Map<String, String>> plainParams = new HashMap<>();
+        public Map<String, Map<QName, String>> params = new HashMap<>();
+        public Map<String, String> plainOptions = new HashMap<>();
+        public Map<QName, String> options = new HashMap<>();
 
-        public void setName(String name) {
+        public void setName(final String name) {
             needsCheck = true;
             this.plainStepName = name;
         }
 
-        public void addInput(String port, String uri, Type type, String contentType) {
+        public void addInput(final String port, final String uri, final Type type, final String contentType) {
             if (!inputs.containsKey(port)) {
-                inputs.put(port, new ArrayList<Input>());
+                inputs.put(port, new ArrayList<>());
             }
 
             inputs.get(port).add(new Input(uri, type, contentType));
         }
 
-        public void addInput(String port, InputStream inputStream, String uri, Type type, String contentType) {
+        public void addInput(final String port, final InputStream inputStream, final String uri, final Type type, final String contentType) {
             if (!inputs.containsKey(port)) {
-                inputs.put(port, new ArrayList<Input>());
+                inputs.put(port, new ArrayList<>());
             }
 
             inputs.get(port).add(new Input(inputStream, uri, type, contentType));
         }
 
-        public void addOption(String optname, String value) {
+        public void addOption(final String optname, final String value) {
             needsCheck = true;
             if (plainOptions.containsKey(optname)) {
                 throw new XProcException("Duplicate option name: '" + optname + "'.");
@@ -828,11 +845,11 @@ public class UserArgs {
             plainOptions.put(optname, value);
         }
 
-        public void addParameter(String port, String name, String value) {
+        public void addParameter(final String port, final String name, final String value) {
             needsCheck = true;
             Map<String, String> portParams;
             if (!plainParams.containsKey(port)) {
-                portParams = new HashMap<String, String>();
+                portParams = new HashMap<>();
             } else {
                 portParams = plainParams.get(port);
             }
@@ -845,7 +862,7 @@ public class UserArgs {
             plainParams.put(port, portParams);
         }
 
-        private QName makeQName(String name) {
+        private QName makeQName(final String name) {
             QName qname;
 
             if (name == null) {
@@ -855,11 +872,11 @@ public class UserArgs {
             } else {
                 int cpos = name.indexOf(":");
                 if (cpos > 0) {
-                    String prefix = name.substring(0, cpos);
+                    final String prefix = name.substring(0, cpos);
                     if (!bindings.containsKey(prefix)) {
                         throw new XProcException("Unbound prefix '" + prefix + "' in: '" + name + "'.");
                     }
-                    String uri = bindings.get(prefix);
+                    final String uri = bindings.get(prefix);
                     qname = new QName(prefix, uri, name.substring(cpos + 1));
                 } else {
                     qname = new QName("", name);
@@ -882,8 +899,8 @@ public class UserArgs {
             stepName = makeQName(plainStepName);
 
             options.clear();
-            for (Entry<String, String> plainOption : plainOptions.entrySet()) {
-                QName name = makeQName(plainOption.getKey());
+            for (final Entry<String, String> plainOption : plainOptions.entrySet()) {
+                final QName name = makeQName(plainOption.getKey());
                 if (options.containsKey(name)) {
                     throw new XProcException("Duplicate option name: '" + name + "'.");
                 }
@@ -891,10 +908,10 @@ public class UserArgs {
             }
 
             params.clear();
-            for (Entry<String, Map<String, String>> plainParam : plainParams.entrySet()) {
-                Map<QName, String> portParams = new HashMap<QName, String>();
-                for (Entry<String, String> portParam : plainParam.getValue().entrySet()) {
-                    QName name = makeQName(portParam.getKey());
+            for (final Entry<String, Map<String, String>> plainParam : plainParams.entrySet()) {
+                final Map<QName, String> portParams = new HashMap<>();
+                for (final Entry<String, String> portParam : plainParam.getValue().entrySet()) {
+                    final QName name = makeQName(portParam.getKey());
                     if (portParams.containsKey(name)) {
                         throw new XProcException("Duplicate parameter name: '" + name + "'.");
                     }

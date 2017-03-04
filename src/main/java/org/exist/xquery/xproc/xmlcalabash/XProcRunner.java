@@ -1,23 +1,21 @@
-/*
- *  eXist Open Source Native XML Database
- *  Copyright (C) 2013 The eXist Project
- *  http://exist-db.org
+/**
+ * XProc Calabash Module - Calabash XProc Module for eXist-db XQuery
+ * Copyright © 2013 The eXist Project (exit-open@lists.sourceforge.net)
  *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.exist.xquery.xproc;
+package org.exist.xquery.xproc.xmlcalabash;
 
 import static com.xmlcalabash.core.XProcConstants.c_data;
 import static com.xmlcalabash.util.Output.Kind.OUTPUT_STREAM;
@@ -26,7 +24,6 @@ import static java.lang.String.format;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -36,24 +33,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.lang.reflect.Array;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import javax.xml.transform.Source;
-import javax.xml.transform.Templates;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.URIResolver;
-import javax.xml.transform.ErrorListener;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.sax.SAXResult;
-import javax.xml.transform.sax.SAXTransformerFactory;
-import javax.xml.transform.sax.TemplatesHandler;
-import javax.xml.transform.sax.TransformerHandler;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
 import net.sf.saxon.s9api.QName;
@@ -65,10 +52,6 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.exist.storage.DBBroker;
 import org.exist.util.io.Resource;
 import org.xml.sax.InputSource;
-import org.exist.xmldb.XmldbURI;
-import org.exist.security.Permission;
-import org.exist.security.PermissionDeniedException;
-import org.exist.dom.persistent.DocumentImpl;
 
 import com.xmlcalabash.core.XProcConfiguration;
 import com.xmlcalabash.core.XProcException;
@@ -86,25 +69,22 @@ import com.xmlcalabash.util.Output.Kind;
 
 /**
  * @author <a href="mailto:shabanovd@gmail.com">Dmitriy Shabanov</a>
- *
  */
 public class XProcRunner {
-    
+
     private static Logger logger = LogManager.getLogger(XProcRunner.class.getName());
 
-    public static final String run(URI staticBaseURI, DBBroker broker, UserArgs userArgs, InputStream defaultIn) throws Exception {
-        XProcConfiguration config = new XProcConfiguration();
-        
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        
-        run(staticBaseURI, defaultIn, byteStream, userArgs, config);
-        
-        return byteStream.toString();
+    public static final String run(final URI staticBaseURI, final DBBroker broker, final UserArgs userArgs, @Nullable final InputStream defaultIn) throws Exception {
+        final XProcConfiguration config = new XProcConfiguration();
+        try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
+            run(staticBaseURI, defaultIn, byteStream, userArgs, config);
+            return byteStream.toString();
+        }
     }
-    
-    protected static boolean run(URI staticBaseURI, InputStream defaultIn, ByteArrayOutputStream byteStream, UserArgs userArgs, XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
-        XProcRuntime runtime = new XProcRuntime(config);
-        
+
+    protected static boolean run(final URI staticBaseURI, @Nullable final InputStream defaultIn, final ByteArrayOutputStream byteStream, final UserArgs userArgs, final XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
+        final XProcRuntime runtime = new XProcRuntime(config);
+
         if (staticBaseURI != null) {
             runtime.setURIResolver(new ExternalResolver(staticBaseURI.toString()));
 //            runtime.setStaticBaseURI(staticBaseURI);
@@ -118,12 +98,12 @@ public class XProcRunner {
         if (userArgs.getPipeline() != null) {
             pipeline = runtime.load(userArgs.getPipeline());
         } else if (userArgs.hasImplicitPipeline()) {
-            XdmNode implicitPipeline = userArgs.getImplicitPipeline(runtime);
+            final XdmNode implicitPipeline = userArgs.getImplicitPipeline(runtime);
 
             if (debug) {
                 System.err.println("Implicit pipeline:");
 
-                Serializer serializer = new Serializer();
+                final Serializer serializer = new Serializer();
 
                 serializer.setOutputProperty(Serializer.Property.INDENT, "yes");
                 serializer.setOutputProperty(Serializer.Property.METHOD, "xml");
@@ -135,36 +115,36 @@ public class XProcRunner {
 
             pipeline = runtime.use(implicitPipeline);
         } else if (config.pipeline != null) {
-            XdmNode doc = config.pipeline.read();
+            final XdmNode doc = config.pipeline.read();
             pipeline = runtime.use(doc);
         } else {
             throw new UnsupportedOperationException("Either a pipeline or libraries and / or steps must be given");
         }
 
         // Process parameters from the configuration...
-        for (String port : config.params.keySet()) {
-            Map<QName, String> parameters = config.params.get(port);
+        for (final String port : config.params.keySet()) {
+            final Map<QName, String> parameters = config.params.get(port);
             setParametersOnPipeline(pipeline, port, parameters);
         }
 
         // Now process parameters from the command line...
-        for (String port : userArgs.getParameterPorts()) {
-            Map<QName, String> parameters = userArgs.getParameters(port);
+        for (final String port : userArgs.getParameterPorts()) {
+            final Map<QName, String> parameters = userArgs.getParameters(port);
             setParametersOnPipeline(pipeline, port, parameters);
         }
 
-        Set<String> ports = pipeline.getInputs();
-        Set<String> userArgsInputPorts = userArgs.getInputPorts();
-        Set<String> cfgInputPorts = config.inputs.keySet();
-        Set<String> allPorts = new HashSet<String>();
+        final Set<String> ports = pipeline.getInputs();
+        final Set<String> userArgsInputPorts = userArgs.getInputPorts();
+        final Set<String> cfgInputPorts = config.inputs.keySet();
+        final Set<String> allPorts = new HashSet<>();
         allPorts.addAll(userArgsInputPorts);
         allPorts.addAll(cfgInputPorts);
 
         // map a given input without port specification to the primary non-parameter input implicitly
-        for (String port : ports) {
+        for (final String port : ports) {
             if (!allPorts.contains(port) && allPorts.contains(null)
-                && pipeline.getDeclareStep().getInput(port).getPrimary()
-                && !pipeline.getDeclareStep().getInput(port).getParameterInput()) {
+                    && pipeline.getDeclareStep().getInput(port).getPrimary()
+                    && !pipeline.getDeclareStep().getInput(port).getParameterInput()) {
 
                 if (userArgsInputPorts.contains(null)) {
                     userArgs.setDefaultInputPort(port);
@@ -175,7 +155,7 @@ public class XProcRunner {
             }
         }
 
-        for (String port : allPorts) {
+        for (final String port : allPorts) {
             if (!ports.contains(port)) {
                 throw new XProcException("There is a binding for the port '" + port + "' but the pipeline declares no such port.");
             }
@@ -184,12 +164,12 @@ public class XProcRunner {
 
             if (userArgsInputPorts.contains(port)) {
                 XdmNode doc = null;
-                for (Input input : userArgs.getInputs(port)) {
+                for (final Input input : userArgs.getInputs(port)) {
                     switch (input.getType()) {
                         case XML:
                             switch (input.getKind()) {
                                 case URI:
-                                    String uri = input.getUri();
+                                    final String uri = input.getUri();
                                     if ("-".equals(uri)) {
                                         throw new IOException("unsupported '-'");
 //                                        doc = runtime.parse(new InputSource(System.in));
@@ -199,9 +179,9 @@ public class XProcRunner {
                                     break;
 
                                 case INPUT_STREAM:
-                                    InputStream inputStream = input.getInputStream();
-                                    doc = runtime.parse(new InputSource(inputStream));
-                                    inputStream.close();
+                                    try (final InputStream inputStream = input.getInputStream()) {
+                                        doc = runtime.parse(new InputSource(inputStream));
+                                    }
                                     break;
 
                                 default:
@@ -218,10 +198,10 @@ public class XProcRunner {
                                     break;
 
                                 case INPUT_STREAM:
-                                    InputStream inputStream = input.getInputStream();
-                                    rd = new ReadableData(runtime, c_data, inputStream, input.getContentType());
-                                    doc = rd.read();
-                                    inputStream.close();
+                                    try (final InputStream inputStream = input.getInputStream()) {
+                                        rd = new ReadableData(runtime, c_data, inputStream, input.getContentType());
+                                        doc = rd.read();
+                                    }
                                     break;
 
                                 default:
@@ -236,7 +216,7 @@ public class XProcRunner {
                     pipeline.writeTo(port, doc);
                 }
             } else {
-                for (ReadablePipe pipe : config.inputs.get(port)) {
+                for (final ReadablePipe pipe : config.inputs.get(port)) {
                     XdmNode doc = pipe.read();
                     pipeline.writeTo(port, doc);
                 }
@@ -245,7 +225,7 @@ public class XProcRunner {
 
         // Implicit binding for stdin?
         String implicitPort = null;
-        for (String port : ports) {
+        for (final String port : ports) {
             if (!allPorts.contains(port)) {
                 if (pipeline.getDeclareStep().getInput(port).getPrimary()
                         && !pipeline.getDeclareStep().getInput(port).getParameterInput()) {
@@ -260,10 +240,10 @@ public class XProcRunner {
             pipeline.writeTo(implicitPort, doc);
         }
 
-        Map<String, Output> portOutputs = new HashMap<String, Output>();
+        final Map<String, Output> portOutputs = new HashMap<>();
 
-        Map<String, Output> userArgsOutputs = userArgs.getOutputs();
-        for (String port : pipeline.getOutputs()) {
+        final Map<String, Output> userArgsOutputs = userArgs.getOutputs();
+        for (final String port : pipeline.getOutputs()) {
             // Bind to "-" implicitly
             Output output = null;
 
@@ -272,7 +252,7 @@ public class XProcRunner {
             } else if (config.outputs.containsKey(port)) {
                 output = new Output(config.outputs.get(port));
             } else if (userArgsOutputs.containsKey(null)
-                       && pipeline.getDeclareStep().getOutput(port).getPrimary()) {
+                    && pipeline.getDeclareStep().getOutput(port).getPrimary()) {
                 // Bind unnamed port to primary output port
                 output = userArgsOutputs.get(null);
             }
@@ -285,19 +265,19 @@ public class XProcRunner {
             portOutputs.put(port, output);
         }
 
-        for (QName optname : config.options.keySet()) {
-            RuntimeValue value = new RuntimeValue(config.options.get(optname), null, null);
+        for (final QName optname : config.options.keySet()) {
+            final RuntimeValue value = new RuntimeValue(config.options.get(optname), null, null);
             pipeline.passOption(optname, value);
         }
 
-        for (QName optname : userArgs.getOptionNames()) {
-            RuntimeValue value = new RuntimeValue(userArgs.getOption(optname), null, null);
+        for (final QName optname : userArgs.getOptionNames()) {
+            final RuntimeValue value = new RuntimeValue(userArgs.getOption(optname), null, null);
             pipeline.passOption(optname, value);
         }
 
         pipeline.run();
 
-        for (String port : pipeline.getOutputs()) {
+        for (final String port : pipeline.getOutputs()) {
             Output output;
             if (portOutputs.containsKey(port)) {
                 output = portOutputs.get(port);
@@ -315,7 +295,7 @@ public class XProcRunner {
                         break;
 
                     case OUTPUT_STREAM:
-                        String outputStreamClassName = output.getOutputStream().getClass().getName();
+                        final String outputStreamClassName = output.getOutputStream().getClass().getName();
                         finest(logger, null, "Copy output from " + port + " to " + outputStreamClassName + " stream");
                         break;
 
@@ -363,9 +343,9 @@ public class XProcRunner {
                     case URI:
                         URI uri = new URI(output.getUri());
 
-                        String filename = uri.getPath();
+                        final String filename = uri.getPath();
 
-                        Resource resource = new Resource(filename);
+                        final Resource resource = new Resource(filename);
                         OutputStream outfile = resource.getOutputStream();
 
 //                        URI furi = new URI(output.getUri());
@@ -376,7 +356,7 @@ public class XProcRunner {
                         break;
 
                     case OUTPUT_STREAM:
-                        OutputStream outputStream = output.getOutputStream();
+                        final OutputStream outputStream = output.getOutputStream();
                         wd = new WritableDocument(runtime, null, serial, outputStream);
                         break;
 
@@ -385,7 +365,7 @@ public class XProcRunner {
                 }
             }
 
-            ReadablePipe rpipe = pipeline.readFrom(port);
+            final ReadablePipe rpipe = pipeline.readFrom(port);
             while (rpipe.moreDocuments()) {
                 wd.write(rpipe.read());
             }
@@ -397,8 +377,8 @@ public class XProcRunner {
 
         return portOutputs.containsValue(null);
     }
-    
-    private static void setParametersOnPipeline(XPipeline pipeline, String port, Map<QName, String> parameters) {
+
+    private static void setParametersOnPipeline(final XPipeline pipeline, final String port, final Map<QName, String> parameters) {
         if ("*".equals(port)) {
             for (QName name : parameters.keySet()) {
                 pipeline.setParameter(name, new RuntimeValue(parameters.get(name)));
@@ -410,7 +390,7 @@ public class XProcRunner {
         }
     }
 
-    private static String message(XdmNode node, String message) {
+    private static String message(final XdmNode node, final String message) {
         String baseURI = "(unknown URI)";
         int lineNumber = -1;
 
@@ -444,27 +424,24 @@ public class XProcRunner {
 //        logger.finer(message(node, message));
 //    }
 
-    private static void finest(Logger logger, XdmNode node, String message) {
+    private static void finest(final Logger logger, final XdmNode node, final String message) {
         logger.trace(message(node, message));
     }
 
     private static class ExternalResolver implements URIResolver {
-        
-        private String baseURI;
-        
-        public ExternalResolver(String base) {
+        private final String baseURI;
+
+        public ExternalResolver(final String base) {
             this.baseURI = base;
         }
-        
-        /* (non-Javadoc)
-         * @see javax.xml.transform.URIResolver#resolve(java.lang.String, java.lang.String)
-         */
-        public Source resolve(String href, String base)
-        throws TransformerException {
+
+        @Override
+        public Source resolve(final String href, final String base)
+                throws TransformerException {
             URL url;
             try {
                 //TODO : use dedicated function in XmldbURI
-                url = new URL(baseURI + "/"  + href);
+                url = new URL(baseURI + "/" + href);
                 final URLConnection connection = url.openConnection();
                 return new StreamSource(connection.getInputStream());
             } catch (final MalformedURLException e) {
@@ -475,5 +452,5 @@ public class XProcRunner {
         }
     }
 
-    
+
 }

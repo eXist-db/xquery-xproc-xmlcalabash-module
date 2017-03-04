@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://expath.org/ns/pkg" name="${package-name}" abbrev="${package-abbrev}" version="${project.version}"
+    spec="1.0">
+    <title>${package-title}</title>
+    <author id="exist-db">eXist-db</author>
+    <website>${project.url}</website>
+    <license>GNU Lesser General Public License, version 3</license>
+    <copyright>true</copyright>
+    <type>library</type>
+    <status>stable</status>
+    <tag>${project.artifactId}</tag>
+    <tag>library</tag>
+    <tag>xproc</tag>
+    <tag>xmlcalabash</tag>
+    <category id="libs">Libraries</category>
+    <category id="exist">eXist extensions</category>
+    <dependency processor="http://exist-db.org" semver-min="3.0.4" />
+    <dependencySets>
+        <dependencySet>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>${project.artifactId}</artifactId>
+            <version>${project.version}</version>
+        </dependencySet>
+        <dependencySet>
+            <groupId>com.xmlcalabash</groupId>
+            <artifactId>xmlcalabash</artifactId>
+            <version>${xmlcalabash.version}</version>
+        </dependencySet>
+
+        <!-- dependencies of xmlcalabash
+            sadly the kuberam xar plugin doesn't detect these correctly -->
+        <dependencySet><groupId>com.nwalsh</groupId><artifactId>nwalsh-annotations</artifactId><version>1.0.0</version></dependencySet>
+        <dependencySet><groupId>net.java.dev.msv</groupId><artifactId>msv-core</artifactId><version>2013.6.1</version></dependencySet>
+        <dependencySet><groupId>net.java.dev.msv</groupId><artifactId>xsdlib</artifactId><version>2013.6.1</version></dependencySet>
+        <dependencySet><groupId>relaxngDatatype</groupId><artifactId>relaxngDatatype</artifactId><version>20020414</version></dependencySet>
+        <dependencySet><groupId>com.sun.xml.bind.jaxb</groupId><artifactId>isorelax</artifactId><version>20090621</version></dependencySet>
+        <dependencySet><groupId>com.ibm.icu</groupId><artifactId>icu4j</artifactId><version>49.1</version></dependencySet>
+        <dependencySet><groupId>nu.validator.htmlparser</groupId><artifactId>htmlparser</artifactId><version>1.4</version></dependencySet>
+        <dependencySet><groupId>org.atteo.classindex</groupId><artifactId>classindex</artifactId><version>3.3</version></dependencySet>
+        <dependencySet><groupId>org.ccil.cowan.tagsoup</groupId><artifactId>tagsoup</artifactId><version>1.2.1</version></dependencySet>
+        <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet</artifactId><version>2.2.2</version></dependencySet>
+        <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet.ext.fileupload</artifactId><version>2.2.2</version></dependencySet>
+        <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet.ext.slf4j</artifactId><version>2.2.2</version></dependencySet>
+        <dependencySet><groupId>org.xmlresolver</groupId><artifactId>xmlresolver</artifactId><version>0.12.3</version></dependencySet>
+        <dependencySet><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId><version>3.0.1</version></dependencySet>
+
+    </dependencySets>
+</package>
