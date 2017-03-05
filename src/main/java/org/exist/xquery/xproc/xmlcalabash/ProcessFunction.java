@@ -263,7 +263,7 @@ public class ProcessFunction extends BasicFunction {
         if (key instanceof XmldbURI) {
             String uri = ((XmldbURI) key).removeLastSegment().toString();
             if (!uri.endsWith("/")) {
-                uri += "/";
+                uri += '/';
             }
 
             return new URI("xmldb", "", uri, null);
@@ -275,8 +275,12 @@ public class ProcessFunction extends BasicFunction {
                 if (uri.startsWith(XmldbURI.EMBEDDED_SERVER_URI_PREFIX)) {
                     uri = uri.substring(XmldbURI.EMBEDDED_SERVER_URI_PREFIX.length());
                 }
+                if(uri.charAt(0) != '/') {
+                    //needed for eXide workaround, as it sets the moduleLoadPath of unsaved queries to: xmldb:exist://__new__1
+                    uri = '/' + uri;
+                }
                 if (!uri.endsWith("/")) {
-                    uri += "/";
+                    uri += '/';
                 }
                 return new URI("xmldb", "", uri, null);
             }
