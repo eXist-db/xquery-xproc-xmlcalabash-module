@@ -130,7 +130,8 @@ public class ProcessFunction extends BasicFunction {
             }
 
             // determine the baseURI
-            final URI baseUri = getStaticBaseURI();
+//            final URI baseUri = getStaticBaseURI();
+            final URI baseUri = null;       //TODO(AR) setting the baseUri seems to cause problems... revisit in future
 
             // execute the XProc
             final String outputResult = XProcRunner.run(baseUri, context.getBroker(), userArgs, primary.orElse(null));
