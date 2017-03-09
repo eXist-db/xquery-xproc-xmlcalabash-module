@@ -26,9 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,12 +33,6 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import javax.annotation.Nullable;
-import javax.xml.transform.Source;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.URIResolver;
-import javax.xml.transform.stream.StreamSource;
 
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
@@ -74,21 +65,21 @@ public class XProcRunner {
 
     private static Logger logger = LogManager.getLogger(XProcRunner.class.getName());
 
-    public static final String run(final URI staticBaseURI, final DBBroker broker, final UserArgs userArgs, @Nullable final InputStream defaultIn) throws Exception {
+    public static final String run(final URI staticBaseURI, final DBBroker broker, final UserArgs userArgs, final InputStream defaultIn) throws Exception {
         final XProcConfiguration config = new XProcConfiguration();
         try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
-            run(staticBaseURI, defaultIn, byteStream, userArgs, config);
+            run(broker, staticBaseURI, defaultIn, byteStream, userArgs, config);
             return byteStream.toString();
         }
     }
 
-    protected static boolean run(final URI staticBaseURI, @Nullable final InputStream defaultIn, final ByteArrayOutputStream byteStream, final UserArgs userArgs, final XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
+    protected static boolean run(final DBBroker broker, final URI staticBaseURI, final InputStream defaultIn, final ByteArrayOutputStream byteStream, final UserArgs userArgs, final XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
         final XProcRuntime runtime = new XProcRuntime(config);
 
         if (staticBaseURI != null) {
-            runtime.setURIResolver(new ExternalResolver(staticBaseURI.toString()));
-//            runtime.setStaticBaseURI(staticBaseURI);
-//            runtime.setBaseURI(staticBaseURI);
+            runtime.setURIResolver(new EXistURIResolver(broker.getBrokerPool(), staticBaseURI.toString()));
+            runtime.setStaticBaseURI(staticBaseURI);
+            runtime.setBaseURI(staticBaseURI);
         }
 
         boolean debug = config.debug;
@@ -427,30 +418,4 @@ public class XProcRunner {
     private static void finest(final Logger logger, final XdmNode node, final String message) {
         logger.trace(message(node, message));
     }
-
-    private static class ExternalResolver implements URIResolver {
-        private final String baseURI;
-
-        public ExternalResolver(final String base) {
-            this.baseURI = base;
-        }
-
-        @Override
-        public Source resolve(final String href, final String base)
-                throws TransformerException {
-            URL url;
-            try {
-                //TODO : use dedicated function in XmldbURI
-                url = new URL(baseURI + "/" + href);
-                final URLConnection connection = url.openConnection();
-                return new StreamSource(connection.getInputStream());
-            } catch (final MalformedURLException e) {
-                return null;
-            } catch (final IOException e) {
-                return null;
-            }
-        }
-    }
-
-
 }
