@@ -17,7 +17,7 @@
  :)
 xquery version "1.0" encoding "UTF-8";
 
-import module namespace xproc="http://exist-db.org/xproc";
+import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
 let $simple-xproc as document-node() := document {
   <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
@@ -36,8 +36,8 @@ let $options-rel := <input type="xml" port="source" url="{$external-uri-rel}"/>
 
 return
 <XProcTest>
-  <PassThroughAbs>{ xproc:process($simple-xproc, $options-abs) }</PassThroughAbs>
-  <PassThroughRel>{ xproc:process($simple-xproc, $options-rel) }</PassThroughRel>
+  <PassThroughAbs>{ xmlcalabash:process($simple-xproc, $options-abs) }</PassThroughAbs>
+  <PassThroughRel>{ xmlcalabash:process($simple-xproc, $options-rel) }</PassThroughRel>
 </XProcTest>
 
 (:============================================================================:)

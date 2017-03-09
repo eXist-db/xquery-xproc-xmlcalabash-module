@@ -19,22 +19,6 @@ xquery version "1.0" encoding "UTF-8";
 
 import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
-let $simple-xproc as document-node() := document {
-  <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
-    version="1.0">
-    <p:input port="source">
-      <p:inline>
-        <doc>Hello world!</doc>
-      </p:inline>
-    </p:input>
-    <p:output port="result"/>
-    <p:identity/>
-  </p:declare-step>
-}
-
-let $options := <output port="result" url="xmldb:///db/xproc-test/OUT.xml"/>
-
-return
 <XProcTest>
-  <OutputResultPort>{ xmlcalabash:process($simple-xproc, $options) }</OutputResultPort>
+  <OutputResultPort>{ xmlcalabash:process('test-xproc-8-1.xpl') }</OutputResultPort>
 </XProcTest>

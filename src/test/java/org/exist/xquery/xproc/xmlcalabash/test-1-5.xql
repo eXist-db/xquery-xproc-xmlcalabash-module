@@ -17,6 +17,6 @@
  :)
 xquery version "1.0" encoding "UTF-8";
 
-import module namespace xproc="http://exist-db.org/xproc";
+import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
-xproc:process('xmldb:exist:///db/xproc-test/test-xproc-1.xpl')
+xmlcalabash:process('xmldb:exist:///db/xproc-test/test-xproc-1.xpl')

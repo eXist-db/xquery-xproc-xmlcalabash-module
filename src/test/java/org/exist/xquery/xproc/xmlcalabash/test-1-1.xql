@@ -17,7 +17,7 @@
  :)
 xquery version "1.0" encoding "UTF-8";
 
-import module namespace xproc="http://exist-db.org/xproc";
+import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
 let $simple-xproc :=
   <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
@@ -32,4 +32,4 @@ let $simple-xproc :=
   </p:declare-step>
 
 return
-	xproc:process($simple-xproc)
+  xmlcalabash:process($simple-xproc)

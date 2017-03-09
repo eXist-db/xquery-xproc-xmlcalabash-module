@@ -17,7 +17,7 @@
  :)
 xquery version "1.0" encoding "UTF-8";
 
-import module namespace xproc="http://exist-db.org/xproc";
+import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
 let $simple-xproc :=
   <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
@@ -49,10 +49,10 @@ let $external-uri-rel as xs:string := 'test-xproc-1.xpl'
 
 return
 <XProcTest>
-  <AsDocumentNode>{ xproc:process($simple-xproc) }</AsDocumentNode>
-  <AsRootElement>{ xproc:process($doc-node-xproc) }</AsRootElement>
-  <ExternalAbs>{ xproc:process($external-uri-abs) }</ExternalAbs>
-  <ExternalRel>{ xproc:process($external-uri-rel) }</ExternalRel>
+  <AsDocumentNode>{ xmlcalabash:process($simple-xproc) }</AsDocumentNode>
+  <AsRootElement>{ xmlcalabash:process($doc-node-xproc) }</AsRootElement>
+  <ExternalAbs>{ xmlcalabash:process($external-uri-abs) }</ExternalAbs>
+  <ExternalRel>{ xmlcalabash:process($external-uri-rel) }</ExternalRel>
 </XProcTest>
 
 (:============================================================================:)

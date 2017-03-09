@@ -85,7 +85,7 @@ public class Simplest {
             final XQuery xquery = pool.getXQueryService();
             assertNotNull(xquery);
 
-            final Sequence seq = xquery.execute(broker, "xproc:process('xmldb:exist:///db/test/hello.xproc')", null);
+            final Sequence seq = xquery.execute(broker, "xmlcalabash:process('xmldb:exist:///db/test/hello.xproc')", null);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
 
@@ -102,7 +102,7 @@ public class Simplest {
             assertNotNull(xquery);
 
             final Sequence seq = xquery.execute(broker,
-                    "xproc:process(" +
+                    "xmlcalabash:process(" +
                             "<p:declare-step version='1.0' xmlns:p='http://www.w3.org/ns/xproc'>" +
                             "   <p:input port='source'>" +
                             "       <p:inline><doc>Helloworld</doc></p:inline>" +
@@ -138,7 +138,7 @@ public class Simplest {
                             + "     <p:identity/>"
                             + " </p:declare-step>"
                             + "}\n"
-                            + "return xproc:process($simple-xproc)",
+                            + "return xmlcalabash:process($simple-xproc)",
                     null);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
@@ -185,7 +185,7 @@ public class Simplest {
             final XQuery xquery = pool.getXQueryService();
             assertNotNull(xquery);
 
-            final Sequence seq = xquery.execute(broker, "xproc:process('xmldb:exist:///db/test/store.xproc')", null);
+            final Sequence seq = xquery.execute(broker, "xmlcalabash:process('xmldb:exist:///db/test/store.xproc')", null);
             assertNotNull(seq);
             assertEquals(1, seq.getItemCount());
 
@@ -203,7 +203,7 @@ public class Simplest {
             final XQuery xquery = pool.getXQueryService();
             assertNotNull(broker);
 
-            xquery.execute(broker, "xproc:process('')", null);
+            xquery.execute(broker, "xmlcalabash:process('')", null);
         }
     }
 

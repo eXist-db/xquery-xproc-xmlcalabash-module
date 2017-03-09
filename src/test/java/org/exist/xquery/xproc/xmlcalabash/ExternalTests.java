@@ -128,7 +128,7 @@ public class ExternalTests {
         runTest(xq, "<doc xmlns:c=\"http://www.w3.org/ns/xproc-step\">Hello world!</doc>");
     }
 
-    @Test
+    @Test(expected = XPathException.class)
     public void test_1_6() throws Exception {
         storeBinary("test-xproc-1.xpl");
         final BinaryDocument xq = storeBinary("test-1-6.xql");
@@ -179,7 +179,7 @@ public class ExternalTests {
         );
     }
 
-    @Test
+    @Test(expected = XPathException.class)
     public void test_7() throws Exception {
         final BinaryDocument xq = storeBinary("test-7.xql");
         runTest(
@@ -193,6 +193,7 @@ public class ExternalTests {
     }
 
     @Test
+    @Ignore
     public void test_8() throws Exception {
         storeXML("test-xproc-8.xpl");
         final BinaryDocument xq = storeBinary("test-8.xql");
@@ -203,6 +204,21 @@ public class ExternalTests {
                         + "<c:result xmlns:c=\"http://www.w3.org/ns/xproc-step\">xmldb:exist:///db/xproc-test/OUT-STORE.xml</c:result>"
                         + "</OutputStore>"
                         + "</XProcTest>"
+        );
+    }
+
+    @Test
+    @Ignore
+    public void test_8_1() throws Exception {
+        storeXML("test-xproc-8-1.xpl");
+        final BinaryDocument xq = storeBinary("test-8-1.xql");
+        runTest(
+            xq,
+            "<XProcTest>"
+                + "<OutputResultPort>"
+                + "<c:result xmlns:c=\"http://www.w3.org/ns/xproc-step\">xmldb:exist:///db/xproc-test/OUT-STORE.xml</c:result>"
+                + "</OutputResultPort>"
+                + "</XProcTest>"
         );
     }
 
@@ -251,8 +267,8 @@ public class ExternalTests {
 
     private BinaryDocument storeBinary(final String resourceName) throws IOException, LockException, TriggerException, PermissionDeniedException, EXistException {
 
-        try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/" + resourceName)) {
-            assertNotNull(inputStream);
+        try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/xmlcalabash/" + resourceName)) {
+            assertNotNull(resourceName, inputStream);
 
 //        StringWriter writer = new StringWriter();
 //        IOUtils.copy(inputStream, writer, "UTF-8");
@@ -291,7 +307,7 @@ public class ExternalTests {
     }
 
     private void storeXML(final String resourceName) throws IOException, LockException, SAXException, CollectionConfigurationException, EXistException, PermissionDeniedException {
-        try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/" + resourceName);
+        try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/xmlcalabash/" + resourceName);
              final StringWriter writer = new StringWriter()) {
 
             IOUtils.copy(inputStream, writer, "UTF-8");
