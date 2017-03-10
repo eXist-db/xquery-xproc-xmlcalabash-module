@@ -78,6 +78,4 @@ Currently there are a few limitations with this extension
 
 * `p:xquery` has no context with eXist, this is a big limitation, but there are several ways around this
 
-* Use `xmldb:exist` type URI
-
 * No documentation, will probably add to existing XProc area
