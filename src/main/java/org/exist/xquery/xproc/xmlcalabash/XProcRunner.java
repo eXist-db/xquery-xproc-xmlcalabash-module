@@ -65,19 +65,43 @@ public class XProcRunner {
 
     private static Logger logger = LogManager.getLogger(XProcRunner.class.getName());
 
-    public static final String run(final URI staticBaseURI, final DBBroker broker, final UserArgs userArgs, final InputStream defaultIn) throws Exception {
-        final XProcConfiguration config = new XProcConfiguration();
+    public static final String run(
+        URI staticBaseURI,
+        DBBroker broker,
+        UserArgs userArgs,
+        InputStream defaultIn
+    ) throws Exception {
+        //final XProcConfiguration config = new XProcConfiguration();
+        final XProcConfiguration config = userArgs.createConfiguration();
+
+        //config.debug = true;
+        //config.catalogs.add(userArgs.catalogList);
+
+        //config.implementations.forEach((qName, aClass) -> System.out.println(qName+" "+aClass));
+
         try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
             run(broker, staticBaseURI, defaultIn, byteStream, userArgs, config);
             return byteStream.toString();
         }
     }
 
-    protected static boolean run(final DBBroker broker, final URI staticBaseURI, final InputStream defaultIn, final ByteArrayOutputStream byteStream, final UserArgs userArgs, final XProcConfiguration config) throws SaxonApiException, IOException, URISyntaxException {
+    protected static boolean run(
+        DBBroker broker,
+        URI staticBaseURI,
+        InputStream defaultIn,
+        ByteArrayOutputStream byteStream,
+        UserArgs userArgs,
+        XProcConfiguration config
+    ) throws SaxonApiException, IOException, URISyntaxException {
+
         final XProcRuntime runtime = new XProcRuntime(config);
 
         if (staticBaseURI != null) {
-            runtime.setURIResolver(new EXistURIResolver(broker.getBrokerPool(), staticBaseURI.toString()));
+            EXistURIResolver resolver = new EXistURIResolver(broker.getBrokerPool(), staticBaseURI.toString(), userArgs.catalogList);
+
+            runtime.setURIResolver(resolver);
+            //runtime.setEntityResolver(resolver);
+
             runtime.setStaticBaseURI(staticBaseURI);
             runtime.setBaseURI(staticBaseURI);
         }

@@ -253,6 +253,17 @@ public class ProcessFunction extends BasicFunction {
                 }
 
                 userArgs.addOption(name, value);
+
+            } else if ("config".equalsIgnoreCase(localName)) {
+                String cfg = ((Item)element).getStringValue();
+                System.out.println("config: "+cfg);
+                userArgs.setConfig(cfg);
+
+            } else if ("catalog".equalsIgnoreCase(localName)) {
+                String cfg = ((Item)element).getStringValue();
+                System.out.println("catalog: "+cfg);
+                userArgs.catalogList = cfg;
+
             } else
                 throw new XPathException(this, "Unknown option '" + localName + "'.");
         }

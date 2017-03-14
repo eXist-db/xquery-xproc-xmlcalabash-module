@@ -73,7 +73,6 @@ import static java.io.File.createTempFile;
 import static java.lang.Long.MAX_VALUE;
 import static java.lang.String.format;
 import static java.lang.System.err;
-import static java.lang.System.exit;
 import static java.net.URLConnection.guessContentTypeFromName;
 import static java.net.URLConnection.guessContentTypeFromStream;
 import static java.nio.channels.Channels.newChannel;
@@ -102,10 +101,10 @@ public class UserArgs {
     protected String entityResolverClass = null;
     protected String uriResolverClass = null;
     protected Input pipeline = null;
-    protected List<Input> libraries = new ArrayList<Input>();
-    protected Map<String, Output> outputs = new HashMap<String, Output>();
-    protected Map<String, String> bindings = new HashMap<String, String>();
-    protected List<StepArgs> steps = new ArrayList<StepArgs>();
+    protected List<Input> libraries = new ArrayList<>();
+    protected Map<String, Output> outputs = new HashMap<>();
+    protected Map<String, String> bindings = new HashMap<>();
+    protected List<StepArgs> steps = new ArrayList<>();
     protected StepArgs curStep = new StepArgs();
     protected StepArgs lastStep = null;
     protected boolean extensionValues = false;
@@ -113,6 +112,7 @@ public class UserArgs {
     protected boolean useXslt10 = false;
     protected boolean transparentJSON = false;
     protected String jsonFlavor = null;
+    protected String catalogList = null;
 
     public void setBaseURI(final URI baseURI) {
         this.baseURI = baseURI;
@@ -131,11 +131,11 @@ public class UserArgs {
     }
 
     public void setProfile(final String profile) {
-        if ("-".equals(profile)) {
-            setProfile(new Output(System.out));
-        } else {
+//        if ("-".equals(profile)) {
+//            setProfile(new Output(System.out));
+//        } else {
             setProfile(new Output(fixUpURI(profile)));
-        }
+//        }
     }
 
     public void setProfile(final OutputStream outputStream) {
@@ -195,11 +195,11 @@ public class UserArgs {
     }
 
     public void setConfig(final String config) {
-        if ("-".equals(config)) {
-            setConfig(new Input(System.in, "<stdin>"));
-        } else {
+//        if ("-".equals(config)) {
+//            setConfig(new Input(System.in, "<stdin>"));
+//        } else {
             setConfig(new Input(fixUpURI(config)));
-        }
+//        }
     }
 
     public void setConfig(final InputStream inputStream, final String uri) {
@@ -498,7 +498,7 @@ public class UserArgs {
         } catch (Exception e) {
             err.println("FATAL: Failed to parse Saxon configuration file.");
             err.println(e);
-            exit(2);
+            //exit(2);
         }
 
         if (this.config != null) {
@@ -527,7 +527,7 @@ public class UserArgs {
             } catch (Exception e) {
                 err.println("FATAL: Failed to parse configuration file.");
                 err.println(e);
-                exit(3);
+                //exit(3);
             } finally {
                 if (instream != null) {
                     instream.close();

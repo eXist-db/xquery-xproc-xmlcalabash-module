@@ -19,8 +19,11 @@
  */
 package org.exist.xquery.xproc.xmlcalabash;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -39,6 +42,15 @@ import org.exist.security.PermissionDeniedException;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
 import org.exist.xmldb.XmldbURI;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.EntityResolver2;
+import org.xmlresolver.Catalog;
+import org.xmlresolver.CatalogResult;
+import org.xmlresolver.Resource;
+import org.xmlresolver.ResourceCache;
+import org.xmlresolver.ResourceConnection;
 
 /**
  * Implementation of URIResolver which
@@ -47,7 +59,7 @@ import org.exist.xmldb.XmldbURI;
  * @Deprecated use org.exist.util.EXistURIResolver
  */
 
-public class EXistURIResolver implements URIResolver {
+public class EXistURIResolver implements URIResolver, EntityResolver, EntityResolver2 {
 
   private static final Logger LOG = LogManager.getLogger(EXistURIResolver.class);
 
@@ -56,11 +68,19 @@ public class EXistURIResolver implements URIResolver {
   final BrokerPool db;
   final String basePath;
 
-  public EXistURIResolver(final BrokerPool db, final String docPath) {
+  private Catalog catalog= null;
+  private ResourceCache cache = null;
+
+  public EXistURIResolver(final BrokerPool db, final String docPath, String catalogList) {
     this.db = db;
     this.basePath = docPath;
     if (LOG.isDebugEnabled()) {
       LOG.debug("EXistURIResolver base path set to " + basePath);
+    }
+
+    if (catalogList != null) {
+      catalog = new Catalog(catalogList);
+      cache = catalog.cache();
     }
   }
 
@@ -119,6 +139,35 @@ public class EXistURIResolver implements URIResolver {
   public Source resolve(final String href, String base) throws TransformerException {
     String path;
 
+    if (catalog != null) {
+      boolean skipCache = false;
+      String uri = href;
+
+      CatalogResult resolved = this.catalog.lookupURI(href);
+      if(resolved == null && base != null) {
+        try {
+          uri = (new URI(base))
+              .resolve(uri)
+              .toURL()
+              .toString();
+
+          resolved = this.catalog.lookupURI(uri);
+
+        } catch (URISyntaxException | MalformedURLException var7) {
+          resolved = null;
+
+        } catch (IllegalArgumentException var9) {
+          resolved = null;
+          skipCache = true;
+        }
+      }
+
+      return resolved == null ?
+          (skipCache ? null : cacheStreamURI(uri))
+          :
+          (resolved.expired() ? cacheStreamURI(uri) : streamResult(resolved));
+    }
+
     if (href.isEmpty()) {
       path = base;
     } else {
@@ -167,6 +216,87 @@ public class EXistURIResolver implements URIResolver {
     }
   }
 
+  private Source streamResult(CatalogResult resolved) {
+    try {
+      return resolved.cached() ?
+          new StreamSource(resolved.body(), resolved.externalURI()) //, resolved.contentType())
+          :
+          new StreamSource(resolved.body(), resolved.uri()); //, resolved.contentType());
+
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  private InputSource inputSource(CatalogResult resolved) {
+    try {
+      InputSource source = new InputSource(resolved.body());
+      source.setSystemId(resolved.cached() ? resolved.externalURI() : resolved.uri());
+
+      return source;
+
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  private Source cacheStreamURI(String resolved) {
+    ResourceConnection conn = new ResourceConnection(resolved);
+    if(conn.getStatusCode() == 200) {
+      String absuriString = conn.getURI();
+      String finalURI = conn.getRedirect();
+      if(finalURI == null) {
+        finalURI = absuriString;
+      }
+
+      if(this.cache != null && this.catalog.cacheSchemeURI(this.getScheme(absuriString)) && this.cache.cacheURI(absuriString)) {
+        try {
+          String ioe = this.cache.addURI(conn);
+          File localFile = new File(ioe);
+          FileInputStream result = new FileInputStream(localFile);
+          return new StreamSource(result, finalURI);
+        } catch (IOException var8) {
+          return null;
+        }
+      } else {
+        return new StreamSource(conn.getStream(), finalURI);
+      }
+    } else {
+      return null;
+    }
+  }
+
+  private InputSource cacheStreamSystem(String resolved, String publicId) {
+    ResourceConnection conn = new ResourceConnection(resolved);
+    if(conn.getStatusCode() == 200) {
+      String absuriString = conn.getURI();
+      if(cache != null && catalog.cacheSchemeURI(getScheme(absuriString)) && cache.cacheURI(absuriString)) {
+        try {
+          String ioe = cache.addSystem(conn, publicId);
+          File localFile = new File(ioe);
+          FileInputStream result = new FileInputStream(localFile);
+
+          InputSource source = new InputSource(result);
+          source.setSystemId(absuriString);
+          return source;
+        } catch (IOException e) {
+          return null;
+        }
+      } else {
+        InputSource source = new InputSource(conn.getStream());
+        source.setSystemId(absuriString);
+        return source;
+      }
+    } else {
+      return null;
+    }
+  }
+
+  private String getScheme(String uri) {
+    int pos = uri.indexOf(":");
+    return pos >= 0 ? uri.substring(0, pos) : null;
+  }
+
   private Source urlSource(final String path) throws TransformerException {
     try {
       final URL url = new URL(path);
@@ -203,5 +333,25 @@ public class EXistURIResolver implements URIResolver {
     } catch (final PermissionDeniedException | IOException e) {
       throw new TransformerException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public InputSource resolveEntity(String publicId, String systemId)
+      throws SAXException, IOException {
+
+    CatalogResult resolved = catalog.lookupPublic(systemId, publicId);
+    return resolved != null && !resolved.expired() ? inputSource(resolved) : cacheStreamSystem(systemId, publicId);
+  }
+
+  @Override
+  public InputSource getExternalSubset(String name, String baseURI)
+      throws SAXException, IOException {
+    throw new RuntimeException("getExternalSubset");
+  }
+
+  @Override
+  public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
+      throws SAXException, IOException {
+    throw new RuntimeException("resolveEntity");
   }
 }
