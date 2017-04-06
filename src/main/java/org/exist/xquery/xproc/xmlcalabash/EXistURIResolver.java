@@ -136,7 +136,14 @@ public class EXistURIResolver implements URIResolver, EntityResolver, EntityReso
   }
 
   @Override
-  public Source resolve(final String href, String base) throws TransformerException {
+  public Source resolve(String href, String base) throws TransformerException {
+    if(href == null || "".equals(href)) {
+      href = base;
+      base = null;
+    }
+
+//    System.out.println("resolve:\n '"+href+"'\n '"+base+"'");
+
     String path;
 
     if (catalog != null) {
@@ -240,7 +247,11 @@ public class EXistURIResolver implements URIResolver, EntityResolver, EntityReso
     }
   }
 
-  private Source cacheStreamURI(String resolved) {
+  private Source cacheStreamURI(String resolved) throws TransformerException {
+    if (resolved.startsWith("xmldb:/")) {
+      return databaseSource(resolved);
+    }
+
     ResourceConnection conn = new ResourceConnection(resolved);
     if(conn.getStatusCode() == 200) {
       String absuriString = conn.getURI();
@@ -298,6 +309,7 @@ public class EXistURIResolver implements URIResolver, EntityResolver, EntityReso
   }
 
   private Source urlSource(final String path) throws TransformerException {
+    System.out.println("urlSource: "+path);
     try {
       final URL url = new URL(path);
       return new StreamSource(url.openStream());
@@ -323,11 +335,11 @@ public class EXistURIResolver implements URIResolver, EntityResolver, EntityReso
       if (doc instanceof BinaryDocument) {
         final Path p = broker.getBinaryFile((BinaryDocument) doc);
         source = new StreamSource(p.toFile());
-        source.setSystemId(p.toUri().toString());
+        source.setSystemId(path);
         return source;
       } else {
         source = new DOMSource(doc);
-        source.setSystemId(uri.toASCIIString());
+        source.setSystemId(path);
         return source;
       }
     } catch (final PermissionDeniedException | IOException e) {
