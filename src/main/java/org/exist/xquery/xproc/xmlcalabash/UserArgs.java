@@ -506,8 +506,8 @@ public class UserArgs {
             try {
                 switch (this.config.getKind()) {
                     case URI:
-                        URI furi = URI.create(this.config.getUri());
-                        instream = new FileInputStream(new File(furi));
+                        URI uri = URI.create(this.config.getUri());
+                        instream = uri.toURL().openStream();
                         break;
 
                     case INPUT_STREAM:
