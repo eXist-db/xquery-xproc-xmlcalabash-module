@@ -65,7 +65,7 @@ public class XProcRunner {
 
     private static Logger logger = LogManager.getLogger(XProcRunner.class.getName());
 
-    public static final String run(
+    public static final Map<String, ByteArrayOutputStream> run(
         URI staticBaseURI,
         DBBroker broker,
         UserArgs userArgs,
@@ -76,20 +76,15 @@ public class XProcRunner {
 
         //config.debug = true;
         //config.catalogs.add(userArgs.catalogList);
-
         //config.implementations.forEach((qName, aClass) -> System.out.println(qName+" "+aClass));
 
-        try (final ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
-            run(broker, staticBaseURI, defaultIn, byteStream, userArgs, config);
-            return byteStream.toString();
-        }
+        return run(broker, staticBaseURI, defaultIn, userArgs, config);
     }
 
-    protected static boolean run(
+    protected static Map<String, ByteArrayOutputStream> run(
         DBBroker broker,
         URI staticBaseURI,
         InputStream defaultIn,
-        ByteArrayOutputStream byteStream,
         UserArgs userArgs,
         XProcConfiguration config
     ) throws SaxonApiException, IOException, URISyntaxException {
@@ -108,7 +103,7 @@ public class XProcRunner {
 
         boolean debug = config.debug;
 
-        XPipeline pipeline = null;
+        XPipeline pipeline;
 
         if (userArgs.getPipeline() != null) {
             pipeline = runtime.load(userArgs.getPipeline());
@@ -178,7 +173,7 @@ public class XProcRunner {
             pipeline.clearInputs(port);
 
             if (userArgsInputPorts.contains(port)) {
-                XdmNode doc = null;
+                XdmNode doc;
                 for (final Input input : userArgs.getInputs(port)) {
                     switch (input.getType()) {
                         case XML:
@@ -292,6 +287,7 @@ public class XProcRunner {
 
         pipeline.run();
 
+        Map<String, ByteArrayOutputStream> outputs = new HashMap<>();
         for (final String port : pipeline.getOutputs()) {
             Output output;
             if (portOutputs.containsKey(port)) {
@@ -318,6 +314,9 @@ public class XProcRunner {
                         throw new UnsupportedOperationException(format("Unsupported output kind '%s'", output.getKind()));
                 }
             }
+
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            outputs.put(port, byteStream);
 
             Serialization serial = pipeline.getSerialization(port);
 
@@ -381,16 +380,19 @@ public class XProcRunner {
             }
 
             final ReadablePipe rpipe = pipeline.readFrom(port);
-            while (rpipe.moreDocuments()) {
-                wd.write(rpipe.read());
-            }
-
-            if (output != null) {
-                wd.close();
+            try {
+                while (rpipe.moreDocuments()) {
+                    wd.write(rpipe.read());
+                }
+            } finally {
+                if (output != null) {
+                    wd.close();
+                }
             }
         }
+        //portOutputs.containsValue(null);
 
-        return portOutputs.containsValue(null);
+        return outputs;
     }
 
     private static void setParametersOnPipeline(final XPipeline pipeline, final String port, final Map<QName, String> parameters) {

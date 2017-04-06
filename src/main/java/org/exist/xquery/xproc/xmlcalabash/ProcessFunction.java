@@ -20,6 +20,7 @@ package org.exist.xquery.xproc.xmlcalabash;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -38,6 +39,7 @@ import org.exist.xquery.Cardinality;
 import org.exist.xquery.FunctionSignature;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.XQueryContext;
+import org.exist.xquery.functions.map.MapType;
 import org.exist.xquery.value.*;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -133,9 +135,24 @@ public class ProcessFunction extends BasicFunction {
             final URI baseUri = getStaticBaseURI();
 
             // execute the XProc
-            final String outputResult = XProcRunner.run(baseUri, context.getBroker(), userArgs, primary.orElse(null));
-            return toDocument(outputResult);
+            Map<String, org.apache.commons.io.output.ByteArrayOutputStream> outputs =
+                XProcRunner.run(baseUri, context.getBroker(), userArgs, primary.orElse(null));
+
+            final MapType map = new MapType(context);
+            for (Map.Entry<String, org.apache.commons.io.output.ByteArrayOutputStream> output : outputs.entrySet()) {
+
+                System.out.println("");
+//                BinaryValue binaryValue = BinaryValueFromInputStream.getInstance(
+//                    context,
+//                    new Base64BinaryValueType(),
+//                    new ByteArrayInputStream(output.getValue().toByteArray())
+//                );
+
+                map.add(new StringValue(output.getKey()), new StringValue(output.getValue().toString()));
+            }
+            return map;
         } catch(final Exception e) {
+            e.printStackTrace();
             throw new XPathException(this, e);
         } finally {
             if(primary.isPresent()) {
@@ -256,12 +273,10 @@ public class ProcessFunction extends BasicFunction {
 
             } else if ("config".equalsIgnoreCase(localName)) {
                 String cfg = ((Item)element).getStringValue();
-                System.out.println("config: "+cfg);
                 userArgs.setConfig(cfg);
 
             } else if ("catalog".equalsIgnoreCase(localName)) {
                 String cfg = ((Item)element).getStringValue();
-                System.out.println("catalog: "+cfg);
                 userArgs.catalogList = cfg;
 
             } else
@@ -302,6 +317,8 @@ public class ProcessFunction extends BasicFunction {
         if (xml == null || xml.isEmpty()) {
             return Sequence.EMPTY_SEQUENCE;
         }
+
+        System.out.println("xml:\n"+xml);
 
         try (final StringReader reader = new StringReader(xml)) {
             final SAXParserFactory factory = SAXParserFactory.newInstance();
