@@ -1,4 +1,5 @@
 # XML Calabash XProc Module for eXist-db XQuery #
+
 [![Java 8](https://img.shields.io/badge/java-8-blue.svg)](http://java.oracle.com) [![License](https://img.shields.io/badge/license-LGPL%203.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html)
 
 This repository holds the code for the eXist-db XQuery XML Calabash XProc extension module.
@@ -14,7 +15,6 @@ Requirements: Java 8, Maven 3.
 
 You will then find a file named similar to `target/xquery-xproc-calabash-module-0.9.xar`.
 
-
 ## Installation into eXist-db
 You can install the module into eXist-db in either one of two ways:
 1. As an EXPath Package (.xar file)
@@ -24,7 +24,6 @@ You can install the module into eXist-db in either one of two ways:
 1. If you have compiled yourself (see above), you can take the `target/xquery-xproc-xmlcalabash-module-1.0-SNAPSHOT.xar` file and upload it via eXist's EXPath Package Manager app in its Dashboard
 
 2. Otherwise, the latest release version will also be available from the eXist's EXPath Package Manager app in its Dashboard
-
 
 ### Direct Installation into eXist-db (.jar)
 1. If you have compiled yourself (see above), copy `target/xquery-xproc-xmlcalabash-module-1.0-SNAPSHOT-exist.jar` to `$EXIST_HOME/lib/user`.
@@ -37,10 +36,9 @@ You can install the module into eXist-db in either one of two ways:
 
 3. Restart eXist-db
 
-
 ## Example Usage
 
-1. Upload an XProc pipeline somewhere into eXist (ex. ``/db/test/hello.xproc`):
+1. Upload an XProc pipeline somewhere into eXist (ex. `/db/test/hello.xproc`):
 
 ```xml
 <p:declare-step version="1.0" xmlns:p="http://www.w3.org/ns/xproc">
@@ -51,7 +49,6 @@ You can install the module into eXist-db in either one of two ways:
     <p:identity/>
 </p:declare-step>
 ```
-
 
 2. Invoke the XProc from XQuery using `xmlcalabash:process` (in eXide for example):
 
@@ -69,10 +66,9 @@ import module namespace xmlcalabash = "http://exist-db.org/xquery/xproc/xmlcalab
 xmlcalabash:process(doc("/db/test/hello.xproc"))
 ```
 
-
 ## Status
 
-Currently there are a few limitations with this extension
+Currently there are a few limitations with this extension:
 
 * Function signature will change soon to accept XML for *pipeline*, *output*, as well as specify input/output/parameter ports and options... for now it's primitive
 
