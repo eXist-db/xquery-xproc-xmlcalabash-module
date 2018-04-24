@@ -11,7 +11,7 @@
 
     <groupId>org.exist-db.xquery.extensions</groupId>
     <artifactId>xquery-xproc-xmlcalabash-module</artifactId>
-    <version>0.10.0</version>
+    <version>0.11.0-SNAPSHOT</version>
 
     <name>XProc Calabash Module</name>
     <description>Calabash XProc Module for eXist-db XQuery</description>
