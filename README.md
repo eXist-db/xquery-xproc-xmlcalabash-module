@@ -1,6 +1,6 @@
 # XML Calabash XProc Module for eXist-db XQuery #
 
-[![Build Status](https://travis-ci.org/eXist-db/xquery-xproc-xmlcalabash-module.svg?branch=master)](https://travis-ci.org/eXist-db/xquery-xproc-xmlcalabash-module)  [![Java 8](https://img.shields.io/badge/java-8-blue.svg)](http://java.oracle.com) [![License](https://img.shields.io/badge/license-LGPL%203.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html)
+[![Build Status](https://travis-ci.com/eXist-db/xquery-xproc-xmlcalabash-module.svg?branch=master)](https://travis-ci.com/eXist-db/xquery-xproc-xmlcalabash-module)  [![Java 8](https://img.shields.io/badge/java-8-blue.svg)](http://java.oracle.com) [![License](https://img.shields.io/badge/license-LGPL%203.0-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0.html)
 
 This repository holds the code for the eXist-db XQuery XML Calabash XProc extension module.
 
