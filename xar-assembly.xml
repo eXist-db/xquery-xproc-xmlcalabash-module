@@ -42,4 +42,12 @@
         <dependencySet><groupId>com.atlassian.commonmark</groupId><artifactId>commonmark</artifactId><version>0.12.1</version></dependencySet>
 
     </dependencySets>
+
+    <components>
+        <resource>
+            <public-uri>${xproc.xmlcalabash.module.namespace}</public-uri>
+            <file>urn:java:class:${java-package-name}.${java-package-main-class-name}</file>
+        </resource>
+    </components>
+
 </package>
