@@ -19,19 +19,7 @@ xquery version "1.0" encoding "UTF-8";
 
 import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
-let $simple-xproc :=
-  <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
-    version="1.0">
-    <p:input port="source">
-      <p:inline>
-        <doc>Hello world!</doc>
-      </p:inline>
-    </p:input>
-    <p:output port="result"/>
-    <p:identity/>
-  </p:declare-step>
-
-let $doc-node-xproc as document-node() := document {
+let $simple-xproc as document-node() := document {
   <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
     version="1.0">
     <p:input port="source">
@@ -44,15 +32,9 @@ let $doc-node-xproc as document-node() := document {
   </p:declare-step>
 }
 
-let $external-uri-abs as xs:string := 'xmldb:///db/xproc-test/test-xproc-1.xpl'
-let $external-uri-rel as xs:string := 'test-xproc-1.xpl'
+let $options := <output port="result" url="xmldb:///db/xproc-test/OUT.xml"/>
 
 return
 <XProcTest>
-  <AsDocumentNode>{ xmlcalabash:process($simple-xproc) }</AsDocumentNode>
-  <AsRootElement>{ xmlcalabash:process($doc-node-xproc) }</AsRootElement>
-  <ExternalAbs>{ xmlcalabash:process($external-uri-abs) }</ExternalAbs>
-  <ExternalRel>{ xmlcalabash:process($external-uri-rel) }</ExternalRel>
+  <OutputResultPort>{ xmlcalabash:process($simple-xproc, $options)?result }</OutputResultPort>
 </XProcTest>
-
-(:============================================================================:)

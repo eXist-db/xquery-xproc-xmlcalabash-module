@@ -19,14 +19,16 @@ xquery version "1.0" encoding "UTF-8";
 
 import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
 
-let $external-xproc-abs as xs:string := 'xmldb:///db/xproc-test/test-xproc-3.xpl'
-
-let $options-1 := <option name="test-option" value="passed-value-for-option"/>
-let $options-1 := ( <option name="test-option" value="passed-value-for-option"/>,
-  <option name="test-option-extra" value="passed-value-for-option-extra"/> )
+let $simple-xproc as document-node() := document {
+  <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
+    version="1.0">
+    <p:input port="source"/>
+    <p:output port="result"/>
+    <p:identity/>
+  </p:declare-step>
+}
 
 return
 <XProcTest>
-  <DefaultOption>{ xmlcalabash:process($external-xproc-abs) }</DefaultOption>
-  <PassedOption>{ xmlcalabash:process($external-xproc-abs, $options-1) }</PassedOption>
+  { xmlcalabash:process($simple-xproc, <A/>, ())?result }
 </XProcTest>

@@ -17,27 +17,42 @@
  :)
 xquery version "1.0" encoding "UTF-8";
 
-import module namespace xmlcalabash="http://exist-db.org/xquery/xproc/xmlcalabash";
+import module namespace xmlcalabash = "http://exist-db.org/xquery/xproc/xmlcalabash";
 
-let $simple-xproc as document-node() := document {
+let $simple-xproc :=
   <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
     version="1.0">
-    <p:input port="source"/>
+    <p:input port="source">
+      <p:inline>
+        <doc>Hello world!</doc>
+      </p:inline>
+    </p:input>
+    <p:output port="result"/>
+    <p:identity/>
+  </p:declare-step>
+
+let $doc-node-xproc as document-node() := document {
+  <p:declare-step xmlns:p="http://www.w3.org/ns/xproc" xmlns:c="http://www.w3.org/ns/xproc-step"
+    version="1.0">
+    <p:input port="source">
+      <p:inline>
+        <doc>Hello world!</doc>
+      </p:inline>
+    </p:input>
     <p:output port="result"/>
     <p:identity/>
   </p:declare-step>
 }
 
-let $external-uri-abs as xs:string := 'xmldb:///db/xproc-test/a.xml'
-let $external-uri-rel as xs:string := 'a.xml'
-
-let $options-abs := <input type="xml" port="source" url="{$external-uri-abs}"/>
-let $options-rel := <input type="xml" port="source" url="{$external-uri-rel}"/>
+let $external-uri-abs as xs:string := 'xmldb:///db/xproc-test/test-xproc-1.xpl'
+let $external-uri-rel as xs:string := 'test-xproc-1.xpl'
 
 return
 <XProcTest>
-  <PassThroughAbs>{ xmlcalabash:process($simple-xproc, $options-abs) }</PassThroughAbs>
-  <PassThroughRel>{ xmlcalabash:process($simple-xproc, $options-rel) }</PassThroughRel>
+  <AsDocumentNode>{ xmlcalabash:process($simple-xproc)?result }</AsDocumentNode>
+  <AsRootElement>{ xmlcalabash:process($doc-node-xproc)?result }</AsRootElement>
+  <ExternalAbs>{ xmlcalabash:process($external-uri-abs)?result }</ExternalAbs>
+  <ExternalRel>{ xmlcalabash:process($external-uri-rel)?result }</ExternalRel>
 </XProcTest>
 
 (:============================================================================:)

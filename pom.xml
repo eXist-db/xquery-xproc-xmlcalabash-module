@@ -25,7 +25,7 @@
 
     <licenses>
         <license>
-            <name>&gt;GNU Lesser General Public License, version 3</name>
+            <name>GNU Lesser General Public License, version 3</name>
             <url>https://opensource.org/licenses/LGPL-3</url>
             <distribution>repo</distribution>
         </license>
@@ -40,7 +40,11 @@
 
     <properties>
         <xproc.xmlcalabash.module.namespace>http://exist-db.org/xquery/xproc/xmlcalabash</xproc.xmlcalabash.module.namespace>
-        <xmlcalabash.version>1.1.15-96</xmlcalabash.version>
+        <existdb.version>5.2.0</existdb.version>
+        <xmlcalabash.version>1.1.30-99</xmlcalabash.version>
+        <saxon.version>9.9.1-6</saxon.version>  <!-- NOTE this must be compatible with the version used by both eXist-db and XML Calabash -->
+        <xmlresolver.version>1.0.4</xmlresolver.version>  <!-- NOTE this must be compatible with the version used by XML Calabash -->
+        <xmlapis.version>1.4.01</xmlapis.version>  <!-- NOTE this must be compatible with the version used by eXist-db -->
 
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -59,7 +63,7 @@
         <dependency>
             <groupId>org.exist-db</groupId>
             <artifactId>exist-core</artifactId>
-            <version>3.0</version>
+            <version>${existdb.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -68,9 +72,29 @@
             <version>${xmlcalabash.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>3.0.2</version>
+            <groupId>org.xmlresolver</groupId>
+            <artifactId>xmlresolver</artifactId>
+            <version>${xmlresolver.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>9.9.1-6</version>
+        </dependency>
+        <dependency>
+            <groupId>com.evolvedbinary.j8fu</groupId>
+            <artifactId>j8fu</artifactId>
+            <version>1.23.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>xml-apis</groupId>
+            <artifactId>xml-apis</artifactId>
+            <version>${xmlapis.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -78,10 +102,21 @@
             <version>4.13</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
+
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>false</filtering>
+            </testResource>
+            <testResource>
+                <directory>src/test/resources-filtered</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
         <plugins>
             <plugin>
                 <groupId>com.mycila</groupId>
@@ -120,6 +155,19 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>analyze</id>
+                        <goals>
+                            <goal>analyze-only</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
@@ -148,6 +196,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M4</version>
+                <configuration>
+                    <argLine>-Dlog4j.configurationFile=${project.build.testOutputDirectory}/log4j2.xml</argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -262,18 +318,24 @@
                             <shadedClassifierName>exist</shadedClassifierName>
                             <artifactSet>
                                 <excludes>
-                                    <exclude>com.thaiopensource:jing</exclude>
+                                    <exclude>com.ibm.icu:icu4j</exclude>
+                                    <exclude>xml-apis:xml-apis</exclude>
+                                    <exclude>xerces:xercesImpl</exclude>
+                                    <exclude>org.relaxng:jing</exclude>
+                                    <exclude>org.ccil.cowan.tagsoup:tagsoup</exclude>
+                                    <exclude>com.google.code.findbugs:jsr305</exclude>
+                                    <exclude>isorelax:isorelax</exclude>
+                                    <exclude>javax.servlet:javax.servlet-api</exclude>
                                     <exclude>commons-codec:commons-codec</exclude>
                                     <exclude>commons-io:commons-io</exclude>
                                     <exclude>commons-logging:commons-logging</exclude>
                                     <exclude>org.apache.logging.log4j:*</exclude>
                                     <exclude>org.apache.ant:*</exclude>
                                     <exclude>net.sf.saxon:Saxon-HE</exclude>
-                                    <exclude>javax.servlet:javax.servlet-api</exclude>
                                     <exclude>org.apache.httpcomponents:*</exclude>
                                     <exclude>commons-fileupload:commons-fileupload</exclude>
                                     <exclude>org.slf4j:*</exclude>
-                                    <exclude>isorelax:isorelax</exclude>
+                                    <exclude>com.evolvedbinary.j8fu:j8fu</exclude>
                                 </excludes>
                             </artifactSet>
                             <transformers>
@@ -289,6 +351,9 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
                                     <resource>META-INF/README.md</resource>
                                     <file>README.md</file>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                                    <resource>log4j2.xml</resource>
                                 </transformer>
                             </transformers>
                         </configuration>

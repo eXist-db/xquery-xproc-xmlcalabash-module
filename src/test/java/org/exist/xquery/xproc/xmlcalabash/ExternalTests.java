@@ -17,19 +17,18 @@
  */
 package org.exist.xquery.xproc.xmlcalabash;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.Map;
+import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Properties;
 
 import javax.xml.transform.OutputKeys;
 
-import org.apache.commons.io.IOUtils;
 import org.exist.EXistException;
 import org.exist.collections.Collection;
 import org.exist.collections.CollectionConfigurationException;
@@ -45,17 +44,19 @@ import org.exist.source.DBSource;
 import org.exist.storage.BrokerPool;
 import org.exist.storage.DBBroker;
 import org.exist.storage.serializers.EXistOutputKeys;
-import org.exist.storage.serializers.Serializer;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
+import org.exist.test.ExistEmbeddedServer;
 import org.exist.util.*;
+import org.exist.util.serializer.XQuerySerializer;
 import org.exist.xmldb.XmldbURI;
 import org.exist.xquery.CompiledXQuery;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.XQuery;
 import org.exist.xquery.XQueryContext;
-import org.exist.xquery.value.NodeValue;
+import org.exist.xquery.functions.map.MapType;
 import org.exist.xquery.value.Sequence;
+import org.exist.xquery.value.StringValue;
 import org.junit.*;
 import org.xml.sax.SAXException;
 
@@ -64,9 +65,11 @@ import org.xml.sax.SAXException;
  */
 public class ExternalTests {
 
+    @ClassRule
+    public static final ExistEmbeddedServer existEmbeddedServer = new ExistEmbeddedServer(true, true);
+
     private final static XmldbURI colURL = XmldbURI.ROOT_COLLECTION_URI.append("xproc-test");
 
-    private static BrokerPool pool;
     private static Collection root;
 
     @Test
@@ -232,6 +235,7 @@ public class ExternalTests {
     }
 
     public void runTest(final BinaryDocument xq, final String expect) throws Exception {
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
             assertNotNull(broker);
 
@@ -241,11 +245,11 @@ public class ExternalTests {
 
             final String result = queryResult2String(broker, seq);
             assertEquals(expect, result);
-
         }
     }
 
     public Sequence run(final BinaryDocument xq) throws Exception {
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
             assertNotNull(broker);
 
@@ -267,7 +271,7 @@ public class ExternalTests {
 
     private BinaryDocument storeBinary(final String resourceName) throws IOException, LockException, TriggerException, PermissionDeniedException, EXistException {
 
-        try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/xmlcalabash/" + resourceName)) {
+        try (final InputStream inputStream = getClass().getResourceAsStream(resourceName)) {
             assertNotNull(resourceName, inputStream);
 
 //        StringWriter writer = new StringWriter();
@@ -282,6 +286,7 @@ public class ExternalTests {
 
         BinaryDocument binDoc = null;
 
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager tm = pool.getTransactionManager();
         assertNotNull(tm);
 
@@ -310,9 +315,17 @@ public class ExternalTests {
         try (final InputStream inputStream = this.getClass().getResourceAsStream("/org/exist/xquery/xproc/xmlcalabash/" + resourceName);
              final StringWriter writer = new StringWriter()) {
 
-            IOUtils.copy(inputStream, writer, "UTF-8");
+            copy(inputStream, writer, UTF_8);
             String data = writer.toString();
             configureAndStore(data, resourceName);
+        }
+    }
+
+    private void copy(final InputStream is, final StringWriter writer, final Charset charset) throws IOException {
+        final byte buf[] = new byte[4096];
+        int read;
+        while ((read = is.read(buf)) > -1) {
+            writer.write(new String(buf, 0, read, charset));
         }
     }
 
@@ -321,6 +334,7 @@ public class ExternalTests {
     }
 
     private DocumentSet configureAndStore(final String configuration, final String data, final String docName) throws EXistException, CollectionConfigurationException, LockException, SAXException, PermissionDeniedException, IOException {
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         final MutableDocumentSet docs = new DefaultDocumentSet();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
@@ -341,18 +355,33 @@ public class ExternalTests {
         return docs;
     }
 
-    private String queryResult2String(final DBBroker broker, final Sequence seq) throws SAXException, XPathException {
+    private String queryResult2String(final DBBroker broker, final Sequence seq) throws SAXException, XPathException, IOException {
+        Sequence result = seq;
+        if (seq.itemAt(0) instanceof MapType) {
+            final MapType map = (MapType) seq.itemAt(0);
+            result = map.get(new StringValue("result"));
+
+            if (result instanceof StringValue) {
+                return result.toString();
+            }
+        }
+
         final Properties props = new Properties();
+        props.setProperty(OutputKeys.METHOD, "adaptive");
         props.setProperty(OutputKeys.INDENT, "no");
         props.setProperty(EXistOutputKeys.HIGHLIGHT_MATCHES, "elements");
-        final Serializer serializer = broker.getSerializer();
-        serializer.reset();
-        serializer.setProperties(props);
-        return serializer.serialize((NodeValue) seq.itemAt(0));
+
+        try (final StringWriter writer = new StringWriter()) {
+            final XQuerySerializer serializer = new XQuerySerializer(broker, props, writer);
+            serializer.serialize(result);
+
+            return writer.toString();
+        }
     }
 
     @Before
     public void setup() throws EXistException, PermissionDeniedException, IOException, TriggerException {
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
              final Txn transaction = transact.beginTransaction()) {
@@ -371,7 +400,7 @@ public class ExternalTests {
 
     @After
     public void cleanup() throws EXistException, PermissionDeniedException, IOException, TriggerException {
-        final BrokerPool pool = BrokerPool.getInstance();
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
              final Txn transaction = transact.beginTransaction()) {
@@ -387,28 +416,5 @@ public class ExternalTests {
             transact.commit(transaction);
 
         }
-    }
-
-    @BeforeClass
-    public static void startDB() throws DatabaseConfigurationException, EXistException {
-        final Path confFile = ConfigurationHelper.lookup("conf.xml");
-        final Configuration config = new Configuration(confFile.toAbsolutePath().toString());
-
-        BrokerPool.configure(1, 5, config);
-        pool = BrokerPool.getInstance();
-        assertNotNull(pool);
-
-        Map<String, Class<?>> map = (Map<String, Class<?>>) pool.getConfiguration().getProperty(XQueryContext.PROPERTY_BUILT_IN_MODULES);
-        map.put(
-                XProcXmlCalabashModule.NAMESPACE_URI,
-                XProcXmlCalabashModule.class);
-    }
-
-    @AfterClass
-    public static void stopDB() {
-        //TestUtils.cleanupDB();ß
-        BrokerPool.stopAll(false);
-        pool = null;
-        root = null;
     }
 }

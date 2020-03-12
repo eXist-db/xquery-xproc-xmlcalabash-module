@@ -22,6 +22,7 @@ package org.exist.xquery.xproc.xmlcalabash;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -333,8 +334,8 @@ public class EXistURIResolver implements URIResolver, EntityResolver, EntityReso
 
       final Source source;
       if (doc instanceof BinaryDocument) {
-        final Path p = broker.getBinaryFile((BinaryDocument) doc);
-        source = new StreamSource(p.toFile());
+        final InputStream is = broker.getBinaryResource((BinaryDocument) doc);
+        source = new StreamSource(is);
         source.setSystemId(path);
         return source;
       } else {

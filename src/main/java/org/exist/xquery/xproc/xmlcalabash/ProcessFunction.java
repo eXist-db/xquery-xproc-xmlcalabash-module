@@ -62,7 +62,7 @@ public class ProcessFunction extends BasicFunction {
     private final static FunctionParameterSequenceType OPTIONS =
             new FunctionParameterSequenceType("options", Type.NODE, Cardinality.ZERO_OR_MORE, "Options");
 
-    private final static FunctionReturnSequenceType RETURN = new FunctionReturnSequenceType(Type.ITEM, Cardinality.ZERO_OR_ONE, "return type");
+    private final static FunctionReturnSequenceType RETURN = new FunctionReturnSequenceType(Type.MAP, Cardinality.ZERO_OR_ONE, "return type");
 
     static final FunctionSignature FNS_PROCESS_1 = new FunctionSignature(
             NAME,
@@ -135,11 +135,11 @@ public class ProcessFunction extends BasicFunction {
             final URI baseUri = getStaticBaseURI();
 
             // execute the XProc
-            Map<String, org.apache.commons.io.output.ByteArrayOutputStream> outputs =
+            Map<String, ByteArrayOutputStream> outputs =
                 XProcRunner.run(baseUri, context.getBroker(), userArgs, primary.orElse(null));
 
             final MapType map = new MapType(context);
-            for (Map.Entry<String, org.apache.commons.io.output.ByteArrayOutputStream> output : outputs.entrySet()) {
+            for (Map.Entry<String, ByteArrayOutputStream> output : outputs.entrySet()) {
 
                 System.out.println("");
 //                BinaryValue binaryValue = BinaryValueFromInputStream.getInstance(

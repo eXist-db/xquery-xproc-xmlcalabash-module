@@ -27,22 +27,19 @@
             <version>${xmlcalabash.version}</version>
         </dependencySet>
 
-        <!-- dependencies of xmlcalabash
-            sadly the kuberam xar plugin doesn't detect these correctly -->
+        <!-- dependencies of XMLCalabash
+            sadly the Kuberam XAR plugin doesn't detect these correctly -->
         <dependencySet><groupId>com.nwalsh</groupId><artifactId>nwalsh-annotations</artifactId><version>1.0.0</version></dependencySet>
         <dependencySet><groupId>net.java.dev.msv</groupId><artifactId>msv-core</artifactId><version>2013.6.1</version></dependencySet>
         <dependencySet><groupId>net.java.dev.msv</groupId><artifactId>xsdlib</artifactId><version>2013.6.1</version></dependencySet>
         <dependencySet><groupId>relaxngDatatype</groupId><artifactId>relaxngDatatype</artifactId><version>20020414</version></dependencySet>
-        <dependencySet><groupId>com.sun.xml.bind.jaxb</groupId><artifactId>isorelax</artifactId><version>20090621</version></dependencySet>
-        <dependencySet><groupId>com.ibm.icu</groupId><artifactId>icu4j</artifactId><version>49.1</version></dependencySet>
         <dependencySet><groupId>nu.validator.htmlparser</groupId><artifactId>htmlparser</artifactId><version>1.4</version></dependencySet>
         <dependencySet><groupId>org.atteo.classindex</groupId><artifactId>classindex</artifactId><version>3.3</version></dependencySet>
-        <dependencySet><groupId>org.ccil.cowan.tagsoup</groupId><artifactId>tagsoup</artifactId><version>1.2.1</version></dependencySet>
         <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet</artifactId><version>2.2.2</version></dependencySet>
         <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet.ext.fileupload</artifactId><version>2.2.2</version></dependencySet>
         <dependencySet><groupId>org.restlet.jee</groupId><artifactId>org.restlet.ext.slf4j</artifactId><version>2.2.2</version></dependencySet>
-        <dependencySet><groupId>org.xmlresolver</groupId><artifactId>xmlresolver</artifactId><version>0.12.3</version></dependencySet>
-        <dependencySet><groupId>com.google.code.findbugs</groupId><artifactId>jsr305</artifactId><version>3.0.1</version></dependencySet>
+        <dependencySet><groupId>org.xmlresolver</groupId><artifactId>xmlresolver</artifactId><version>1.0.4</version></dependencySet>
+        <dependencySet><groupId>com.atlassian.commonmark</groupId><artifactId>commonmark</artifactId><version>0.12.1</version></dependencySet>
 
     </dependencySets>
 </package>

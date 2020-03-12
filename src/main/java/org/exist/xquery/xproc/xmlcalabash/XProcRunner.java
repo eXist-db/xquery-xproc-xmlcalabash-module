@@ -21,6 +21,7 @@ import static com.xmlcalabash.core.XProcConstants.c_data;
 import static com.xmlcalabash.util.Output.Kind.OUTPUT_STREAM;
 import static java.lang.String.format;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,15 +32,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.s9api.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.sf.saxon.s9api.QName;
-import net.sf.saxon.s9api.SaxonApiException;
-import net.sf.saxon.s9api.Serializer;
-import net.sf.saxon.s9api.XdmNode;
-
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.exist.storage.DBBroker;
 import org.exist.util.io.Resource;
 import org.xml.sax.InputSource;
@@ -113,7 +110,9 @@ public class XProcRunner {
             if (debug) {
                 System.err.println("Implicit pipeline:");
 
-                final Serializer serializer = new Serializer();
+                final Configuration configuration = Configuration.newConfiguration();
+                final Processor processor = new Processor(configuration);
+                final Serializer serializer = processor.newSerializer();
 
                 serializer.setOutputProperty(Serializer.Property.INDENT, "yes");
                 serializer.setOutputProperty(Serializer.Property.METHOD, "xml");

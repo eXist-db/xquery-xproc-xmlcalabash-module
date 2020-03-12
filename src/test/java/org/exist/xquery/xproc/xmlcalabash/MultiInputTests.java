@@ -20,8 +20,6 @@ package org.exist.xquery.xproc.xmlcalabash;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -43,21 +41,14 @@ import org.exist.storage.serializers.EXistOutputKeys;
 import org.exist.storage.serializers.Serializer;
 import org.exist.storage.txn.TransactionManager;
 import org.exist.storage.txn.Txn;
-import org.exist.util.Configuration;
-import org.exist.util.ConfigurationHelper;
-import org.exist.util.DatabaseConfigurationException;
+import org.exist.test.ExistEmbeddedServer;
 import org.exist.util.LockException;
 import org.exist.xmldb.XmldbURI;
 import org.exist.xquery.XPathException;
 import org.exist.xquery.XQuery;
-import org.exist.xquery.XQueryContext;
 import org.exist.xquery.value.NodeValue;
 import org.exist.xquery.value.Sequence;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.xml.sax.SAXException;
 
 /**
@@ -65,7 +56,9 @@ import org.xml.sax.SAXException;
  */
 public class MultiInputTests {
 
-    private static BrokerPool pool;
+    @ClassRule
+    public static final ExistEmbeddedServer existEmbeddedServer = new ExistEmbeddedServer(true, true);
+
     private static Collection root;
 
     private final static String XPROC = "<?xml version='1.0'?>" +
@@ -73,23 +66,23 @@ public class MultiInputTests {
             + "     xmlns:c='http://www.w3.org/ns/xproc-step' version='1.0'>"
 
             + " <p:input port='source' sequence='false'/>"
-            + " <p:input port='parameters' kind='parameter'/>"
+            + " <p:input port='parameters' kind='pxarameter'/>"
             + " <p:output port='result' sequence='false'/>"
 
             + " <p:xslt name='first-to-intermediate'>"
             + "     <p:input port='stylesheet'>"
-            + "         <p:document href='first.xsl'/>"
+            + "         <p:document href='xmldb:exist:///db/test/first.xsl'/>"
             + "     </p:input>"
             + " </p:xslt>"
 
-            + " <p:store href='intermediate.xml'/>"
+            + " <p:store href='xmldb:exist:///db/test/intermediate.xml'/>"
 
             + " <p:xslt>"
             + "     <p:input port='source'>"
             + "         <p:pipe step='first-to-intermediate' port='result'/>"
             + "     </p:input> "
             + "     <p:input port='stylesheet'>"
-            + "         <p:document href='final.xsl'/>"
+            + "         <p:document href='xmldb:exist:///db/test/final.xsl'/>"
             + "     </p:input>"
             + " </p:xslt>"
 
@@ -131,6 +124,7 @@ public class MultiInputTests {
         configureAndStore(FIRST_XSL, "first.xsl");
         configureAndStore(FINAL_XSL, "final.xsl");
 
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()))) {
 
             final XQuery xquery = pool.getXQueryService();
@@ -156,6 +150,7 @@ public class MultiInputTests {
 
     private DocumentSet configureAndStore(final String configuration, final String data, final String docName) throws EXistException, CollectionConfigurationException, LockException, SAXException, PermissionDeniedException, IOException {
         final MutableDocumentSet docs = new DefaultDocumentSet();
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
              final Txn transaction = transact.beginTransaction()) {
@@ -187,6 +182,7 @@ public class MultiInputTests {
 
     @Before
     public void setup() throws EXistException, PermissionDeniedException, IOException, TriggerException {
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
              final Txn transaction = transact.beginTransaction()) {
@@ -205,7 +201,7 @@ public class MultiInputTests {
 
     @After
     public void cleanup() throws EXistException, PermissionDeniedException, IOException, TriggerException {
-        final BrokerPool pool = BrokerPool.getInstance();
+        final BrokerPool pool = existEmbeddedServer.getBrokerPool();
         final TransactionManager transact = pool.getTransactionManager();
         try (final DBBroker broker = pool.get(Optional.of(pool.getSecurityManager().getSystemSubject()));
              final Txn transaction = transact.beginTransaction()) {
@@ -221,28 +217,5 @@ public class MultiInputTests {
             transact.commit(transaction);
 
         }
-    }
-
-    @BeforeClass
-    public static void startDB() throws DatabaseConfigurationException, EXistException {
-        final Path confFile = ConfigurationHelper.lookup("conf.xml");
-        final Configuration config = new Configuration(confFile.toAbsolutePath().toString());
-
-        BrokerPool.configure(1, 5, config);
-        pool = BrokerPool.getInstance();
-        assertNotNull(pool);
-
-        final Map<String, Class<?>> map = (Map<String, Class<?>>) pool.getConfiguration().getProperty(XQueryContext.PROPERTY_BUILT_IN_MODULES);
-        map.put(
-                XProcXmlCalabashModule.NAMESPACE_URI,
-                XProcXmlCalabashModule.class);
-    }
-
-    @AfterClass
-    public static void stopDB() {
-        //TestUtils.cleanupDB();
-        BrokerPool.stopAll(false);
-        pool = null;
-        root = null;
     }
 }
