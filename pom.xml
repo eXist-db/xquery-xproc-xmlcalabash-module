@@ -41,7 +41,7 @@
     <properties>
         <xproc.xmlcalabash.module.namespace>http://exist-db.org/xquery/xproc/xmlcalabash</xproc.xmlcalabash.module.namespace>
         <existdb.version>5.2.0</existdb.version>
-        <xmlcalabash.version>1.2.1-99</xmlcalabash.version>
+        <xmlcalabash.version>1.2.4-100</xmlcalabash.version>
         <saxon.version>9.9.1-6</saxon.version>  <!-- NOTE this must be compatible with the version used by both eXist-db and XML Calabash -->
         <xmlresolver.version>1.0.8</xmlresolver.version>  <!-- NOTE this must be compatible with the version used by XML Calabash -->
         <xmlapis.version>1.4.01</xmlapis.version>  <!-- NOTE this must be compatible with the version used by eXist-db -->
