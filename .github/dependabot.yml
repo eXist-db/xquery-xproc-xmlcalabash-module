@@ -1,0 +1,19 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "03:00"
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: net.sf.saxon:Saxon-HE
+    versions:
+    - "10.3"
+    - "10.5"
+  - dependency-name: com.mycila:license-maven-plugin
+    versions:
+    - "4.0"
+  - dependency-name: org.apache.logging.log4j:log4j-api
+    versions:
+    - 2.14.0
